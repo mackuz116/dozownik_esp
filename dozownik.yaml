@@ -9,13 +9,20 @@ esp32:
 
 # Pobieranie danych z pliku secrets.yaml
 wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
+  ssid: "MacKuz_20"
+  password: "qazxswedcvfrt"
+  power_save_mode: NONE 
+  fast_connect: true   # Przyspiesza łączenie
+  #output_power: 18.5dB # Czasami obniżenie mocy pomaga przy bliskim kontakcie z routerem
+  # Dodaj to poniżej:
+  reboot_timeout: 0s # Zapobiega restartom przy braku wifi
   # Opcjonalnie: ustawienie statycznego IP przyspiesza łączenie
   # manual_ip:
   #   static_ip: 192.168.1.50
   #   gateway: 192.168.1.1
   #   subnet: 255.255.255.0
+on_connect:
+    - logger.log: "WiFi jest gotowe!"
 
 # Umożliwia wgrywanie kodu przez WiFi
 ota:
@@ -34,6 +41,12 @@ api:
 # Logi przydatne przy debugowaniu (widoczne w terminalu)
 logger:
   level: DEBUG
+
+i2c:
+  sda: GPIO4
+  scl: GPIO3
+  scan: true  # Dzięki temu w logach zobaczysz adres 0x68
+
 
 # Magistrala SPI dla wyświetlacza
 spi:
