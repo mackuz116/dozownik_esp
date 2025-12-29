@@ -1,112 +1,676 @@
 esphome:
-  name: dozownik-akwarium
-  friendly_name: Dozownik Akwarium
+  name: dozownik-nawozow
+  friendly_name: "Dozownik V3.1 - WROOM"
 
 esp32:
-  board: esp32-s3-devkitc-1
+  board: esp32dev
   framework:
-    type: esp-idf
+    type: arduino
 
-# Pobieranie danych z pliku secrets.yaml
+
+# 1. Włączamy obsługę zapytań HTTP
+http_request:
+  useragent: esphome/device
+  timeout: 15s
+  verify_ssl: false  # To uciszy błąd kompilatora
+
+preferences:
+  flash_write_interval: 0s  # Wyłączamy auto-zapis (używamy Twojego sync)
+
 wifi:
   ssid: "MacKuz_20"
   password: "qazxswedcvfrt"
-  power_save_mode: NONE 
-  fast_connect: true   # Przyspiesza łączenie
-  #output_power: 18.5dB # Czasami obniżenie mocy pomaga przy bliskim kontakcie z routerem
-  # Dodaj to poniżej:
-  reboot_timeout: 0s # Zapobiega restartom przy braku wifi
-  # Opcjonalnie: ustawienie statycznego IP przyspiesza łączenie
-  # manual_ip:
-  #   static_ip: 192.168.1.50
-  #   gateway: 192.168.1.1
-  #   subnet: 255.255.255.0
-on_connect:
-    - logger.log: "WiFi jest gotowe!"
+  power_save_mode: NONE
 
-# Umożliwia wgrywanie kodu przez WiFi
-ota:
-  - platform: esphome
-    password: !secret ota_password
+# --- MAGISTRALA SPI ---
+spi:
+  clk_pin: 18
+  mosi_pin: 23
+  miso_pin: 19
 
-# Panel WWW dostępny pod adresem IP urządzenia
 web_server:
   port: 80
+  version: 2
 
-# Natywne połączenie z Home Assistant
 api:
-  encryption:
-    key: !secret api_encryption_key
 
-# Logi przydatne przy debugowaniu (widoczne w terminalu)
-logger:
-  level: DEBUG
+ota:
+  - platform: esphome
 
 i2c:
-  sda: GPIO4
-  scl: GPIO3
-  scan: true  # Dzięki temu w logach zobaczysz adres 0x68
+  sda: 21
+  scl: 22
+  scan: true
+
+logger:
+  level: INFO
 
 
-# Magistrala SPI dla wyświetlacza
-spi:
-  clk_pin: GPIO12
-  mosi_pin: GPIO11
 
-# Konfiguracja wyświetlacza TFT 2.4 cala (ILI9341)
+interval:
+  - interval: 10min
+    then:
+      - http_request.get:
+          url: !lambda |-
+            char url[250];
+            // TU WKLEJ SWÓJ LINK Z GOOGLE (pomiędzy cudzysłów)
+            const char* base_url = "https://script.google.com/macros/s/AKfycbxi8G0N5jUF9fDgPCwcEO6nfc6wcEVyZff2Etf-ZoIC1acMMf-AaNcCrpLiRXcuXPs4/exec";
+            sprintf(url, "%s?temp=%.1f&ph=%.2f&tds=%.0f", 
+                    base_url, id(temp_sensor_id).state, id(ph_sensor_id).state, id(tds_manual_id).state);
+            return url;
+
+time:
+  - platform: ds1307
+    id: ds_time
+    timezone: "Europe/Warsaw"
+    update_interval: 15min
+    on_time:
+      - seconds: 0
+        minutes: 0
+        hours: /1 
+        then:
+          - if:
+              condition: { lambda: 'return id(ds_time).now().hour == (int)id(h_p1).state;' }
+              then: [script.execute: script_p1]
+          - if:
+              condition: { lambda: 'return id(ds_time).now().hour == (int)id(h_p2).state;' }
+              then: [script.execute: script_p2]
+          - if:
+              condition: { lambda: 'return id(ds_time).now().hour == (int)id(h_p3).state;' }
+              then: [script.execute: script_p3]
+          - if:
+              condition: { lambda: 'return id(ds_time).now().hour == (int)id(h_p4).state;' }
+              then: [script.execute: script_p4]
+          - if:
+              condition: { lambda: 'return id(ds_time).now().hour == (int)id(h_p5).state;' }
+              then: [script.execute: script_p5]
+          - if:
+              condition: { lambda: 'return id(ds_time).now().hour == (int)id(h_p6).state;' }
+              then: [script.execute: script_p6]
+
+  - platform: sntp
+    id: sntp_time
+
+
+sensor:
+  - platform: template
+    name: "Manualny TDS"
+    id: tds_manual_id
+    unit_of_measurement: "ppm"
+    lambda: 'return 245.0;' # Tu na razie wpisane na sztywno
+
+  - platform: template
+    name: "Manualne pH"
+    id: ph_sensor_id
+    lambda: 'return 6.85;'
+
+  - platform: template
+    name: "Manualna Temp"
+    id: temp_sensor_id
+    unit_of_measurement: "°C"
+    lambda: 'return 24.5;'
+
+
+# --- SKRYPTY DAWKOWANIA ---
+script:
+  - id: script_p1
+    mode: queued
+    then:
+      - switch.turn_on: p1
+      - delay: !lambda "return id(d1).state * id(c1).state * 1000;"
+      - switch.turn_off: p1
+      - lambda: |-
+          id(bottle_p1).publish_state(max(0.0f, id(bottle_p1).state - id(d1).state));
+          global_preferences->sync();
+        
+  - id: script_p2
+    mode: queued
+    then:
+      - switch.turn_on: p2
+      - delay: !lambda "return id(d2).state * id(c2).state * 1000;"
+      - switch.turn_off: p2
+      - lambda: |-
+          id(bottle_p2).publish_state(max(0.0f, id(bottle_p2).state - id(d2).state));
+          global_preferences->sync();
+
+  - id: script_p3
+    mode: queued
+    then:
+      - switch.turn_on: p3
+      - delay: !lambda "return id(d3).state * id(c3).state * 1000;"
+      - switch.turn_off: p3
+      - lambda: |-
+          id(bottle_p3).publish_state(max(0.0f, id(bottle_p3).state - id(d3).state));
+          global_preferences->sync();
+
+  - id: script_p4
+    mode: queued
+    then:
+      - switch.turn_on: p4
+      - delay: !lambda "return id(d4).state * id(c4).state * 1000;"
+      - switch.turn_off: p4
+      - lambda: |- 
+          id(bottle_p4).publish_state(max(0.0f, id(bottle_p4).state - id(d4).state));
+          global_preferences->sync();
+
+
+  - id: script_p5
+    mode: queued
+    then:
+      - switch.turn_on: p5
+      - delay: !lambda "return id(d5).state * id(c5).state * 1000;"
+      - switch.turn_off: p5
+      - lambda: |-
+          id(bottle_p5).publish_state(max(0.0f, id(bottle_p5).state - id(d5).state));
+          global_preferences->sync();
+
+  - id: script_p6
+    mode: queued
+    then:
+      - switch.turn_on: p6
+      - delay: !lambda "return id(d6).state * id(c6).state * 1000;"
+      - switch.turn_off: p6
+      - lambda: |-
+          id(bottle_p6).publish_state(max(0.0f, id(bottle_p6).state - id(d6).state));
+          global_preferences->sync();
+
+
+
 display:
-  - platform: ili9xxx
-    model: ILI9341
-    id: my_tft
-    invert_colors: false  # Dodaj tę linię
-    cs_pin: GPIO10
-    dc_pin: GPIO9
-    reset_pin: GPIO8
-    rotation: 90
+  - platform: lcd_pcf8574
+    dimensions: 20x4
+    address: 0x27
+    id: my_display
     lambda: |-
-      // Czyścimy ekran na czarno
-      it.fill(id(COLOR_BLACK));
+      // Linia 1: Data i Godzina (20 znaków)
+      it.strftime(0, 0, "%d.%m.%Y  %H:%M:%S", id(ds_time).now());
       
-      // Rysujemy ramkę nagłówka
-      it.rectangle(0, 0, 320, 32, id(COLOR_GRAY));
+      // Linia 2: Rotacja butelek (z funkcją MX dla 100%)
+      if ((millis() % 10000) < 5000) {
+        // Pompy 1, 2, 3
+        float p1 = id(bottle_p1).state / 10.0;
+        float p2 = id(bottle_p2).state / 10.0;
+        float p3 = id(bottle_p3).state / 10.0;
+        
+        it.printf(0, 1, "P1:%s%% P2:%s%% P3:%s%%", 
+          (p1 >= 100.0 ? "MX" : str_sprintf("%2.0f", p1).c_str()),
+          (p2 >= 100.0 ? "MX" : str_sprintf("%2.0f", p2).c_str()),
+          (p3 >= 100.0 ? "MX" : str_sprintf("%2.0f", p3).c_str()));
+      } else {
+        // Pompy 4, 5, 6
+        float p4 = id(bottle_p4).state / 10.0;
+        float p5 = id(bottle_p5).state / 10.0;
+        float p6 = id(bottle_p6).state / 10.0;
+        
+        it.printf(0, 1, "P4:%s%% P5:%s%% P6:%s%%", 
+          (p4 >= 100.0 ? "MX" : str_sprintf("%2.0f", p4).c_str()),
+          (p5 >= 100.0 ? "MX" : str_sprintf("%2.0f", p5).c_str()),
+          (p6 >= 100.0 ? "MX" : str_sprintf("%2.0f", p6).c_str()));
+      }
       
-      // Tekst powitalny
-      it.print(160, 10, id(font_medium), id(COLOR_WHITE), TextAlign::TOP_CENTER, "DOZOWNIK 300L");
+      // Linia 3: PH i Temperatura (rozdzielone, z dużą ilością miejsca)
+      it.printf(0, 2, "PH:%4.2f  Temp:%4.1fC", 
+        id(ph_sensor_id).state, id(temp_sensor_id).state);
       
-      // Status systemu
-      it.print(160, 120, id(font_small), id(COLOR_GREEN), TextAlign::CENTER, "System Online - Czekam na dane...");
-      
-      // Linia oddzielająca stopkę
-      it.line(0, 210, 320, 210, id(COLOR_GRAY));
+      // Linia 4: TDS i Info o zbiorniku
+      it.printf(0, 3, "TDS:%3.0f ppm", id(tds_manual_id).state);
 
-# Definicja czcionek (ESPHome sam je pobierze z Google Fonts)
-font:
-  - file: "gfonts://Roboto"
-    id: font_small
-    size: 14
-  - file: "gfonts://Roboto"
-    id: font_medium
-    size: 20
 
-# Paleta kolorów używana w projekcie
-color:
-  - id: COLOR_BLACK
-    red: 0%
-    green: 0%
-    blue: 0%
-  - id: COLOR_WHITE
-    red: 100%
-    green: 100%
-    blue: 100%
-  - id: COLOR_GREEN
-    red: 0%
-    green: 100%
-    blue: 0%
-  - id: COLOR_GRAY
-    red: 30%
-    green: 30%
-    blue: 30%
-  - id: COLOR_YELLOW
-    red: 100%
-    green: 100%
-    blue: 0%
+# --- WIZUALIZACJA I SENSORY ---
+text_sensor:
+  # 1. Główny czas z modułu RTC (ten steruje pompami)
+  - platform: template
+    name: "00. CZAS: Zegar RTC"
+    id: time_rtc_sensor
+    lambda: 'return id(ds_time).now().strftime("%H:%M:%S");'
+    update_interval: 1s
+
+  # 2. Czas pobrany bezpośrednio z internetu (NTP)
+  - platform: template
+    name: "00. CZAS: Internet (NTP)"
+    id: time_ntp_sensor
+    lambda: |-
+      if (id(sntp_time).now().is_valid()) {
+        return id(sntp_time).now().strftime("%H:%M:%S");
+      } else {
+        return {"Synchronizacja..."};
+      }
+    update_interval: 1s
+
+  # 3. Data systemowa
+  - platform: template
+    name: "00. SYSTEM: Data"
+    lambda: 'return id(ds_time).now().strftime("%Y-%m-%d");'
+    update_interval: 60s
+
+
+  - platform: template
+    name: "02. POZIOM: Mikro [P1]"
+    id: bar_p1
+    lambda: |-
+      int dots = (id(bottle_p1).state / 1000.0) * 10.0;
+      std::string bar = "[";
+      for(int i=0; i<10; i++) { if(i < dots) bar += "█"; else bar += "░"; }
+      bar += "] " + to_string((int)((id(bottle_p1).state / 1000.0) * 100.0)) + "%";
+      return bar;
+    update_interval: 5s
+
+  - platform: template
+    name: "02. POZIOM: Makro [P2]"
+    id: bar_p2
+    lambda: |-
+      int dots = (id(bottle_p2).state / 1000.0) * 10.0;
+      std::string bar = "[";
+      for(int i=0; i<10; i++) { if(i < dots) bar += "█"; else bar += "░"; }
+      bar += "] " + to_string((int)((id(bottle_p2).state / 1000.0) * 100.0)) + "%";
+      return bar;
+    update_interval: 5s
+
+  - platform: template
+    name: "02. POZIOM: Potas [P3]"
+    id: bar_p3
+    lambda: |-
+      int dots = (id(bottle_p3).state / 1000.0) * 10.0;
+      std::string bar = "[";
+      for(int i=0; i<10; i++) { if(i < dots) bar += "█"; else bar += "░"; }
+      bar += "] " + to_string((int)((id(bottle_p3).state / 1000.0) * 100.0)) + "%";
+      return bar;
+    update_interval: 5s
+
+  - platform: template
+    name: "02. POZIOM: Carbo [P4]"
+    id: bar_p4
+    lambda: |-
+      int dots = (id(bottle_p4).state / 1000.0) * 10.0;
+      std::string bar = "[";
+      for(int i=0; i<10; i++) { if(i < dots) bar += "█"; else bar += "░"; }
+      bar += "] " + to_string((int)((id(bottle_p4).state / 1000.0) * 100.0)) + "%";
+      return bar;
+    update_interval: 5s
+
+  - platform: template
+    name: "02. POZIOM: Magnez [P5]"
+    id: bar_p5
+    lambda: |-
+      int dots = (id(bottle_p5).state / 1000.0) * 10.0;
+      std::string bar = "[";
+      for(int i=0; i<10; i++) { if(i < dots) bar += "█"; else bar += "░"; }
+      bar += "] " + to_string((int)((id(bottle_p5).state / 1000.0) * 100.0)) + "%";
+      return bar;
+    update_interval: 5s
+
+  - platform: template
+    name: "02. POZIOM: Nawóz 6 [P6]"
+    id: bar_p6
+    lambda: |-
+      int dots = (id(bottle_p6).state / 1000.0) * 10.0;
+      std::string bar = "[";
+      for(int i=0; i<10; i++) { if(i < dots) bar += "█"; else bar += "░"; }
+      bar += "] " + to_string((int)((id(bottle_p6).state / 1000.0) * 100.0)) + "%";
+      return bar;
+    update_interval: 5s
+
+# --- KONFIGURACJA LICZBOWA (BOX) ---
+number:
+  # POJEMNIKI (1000ml)
+  - platform: template
+    name: "02. BUTELKA: P1 (ml)"
+    id: bottle_p1
+    mode: BOX
+    min_value: 0
+    max_value: 1000
+    step: 1
+    optimistic: true
+    restore_value: yes
+    initial_value: 1000
+  - platform: template
+    name: "02. BUTELKA: P2 (ml)"
+    initial_value: 1000
+    id: bottle_p2
+    mode: BOX
+    min_value: 0
+    max_value: 1000
+    step: 1
+    optimistic: true
+    restore_value: yes
+  - platform: template
+    name: "02. BUTELKA: P3 (ml)"
+    id: bottle_p3
+    mode: BOX
+    min_value: 0
+    max_value: 1000
+    step: 1
+    optimistic: true
+    restore_value: yes
+    initial_value: 1000
+  - platform: template
+    name: "02. BUTELKA: P4 (ml)"
+    id: bottle_p4
+    mode: BOX
+    min_value: 0
+    max_value: 1000
+    step: 1
+    optimistic: true
+    restore_value: yes
+    initial_value: 1000
+  - platform: template
+    name: "02. BUTELKA: P5 (ml)"
+    id: bottle_p5
+    mode: BOX
+    min_value: 0
+    max_value: 1000
+    step: 1
+    optimistic: true
+    restore_value: yes
+    initial_value: 1000
+  - platform: template
+    name: "02. BUTELKA: P6 (ml)"
+    id: bottle_p6
+    mode: BOX
+    min_value: 0
+    max_value: 1000
+    step: 1
+    optimistic: true
+    restore_value: yes
+    initial_value: 1000
+
+  # KALIBRACJA
+  - platform: template
+    name: "03. KALIB: P1 (s/ml)"
+    id: c1
+    mode: BOX
+    min_value: 0
+    max_value: 20
+    step: 0.01
+    initial_value: 3.0
+    optimistic: true
+    restore_value: yes
+  - platform: template
+    name: "03. KALIB: P2 (s/ml)"
+    id: c2
+    mode: BOX
+    min_value: 0
+    max_value: 20
+    step: 0.01
+    initial_value: 3.0
+    optimistic: true
+    restore_value: yes
+  - platform: template
+    name: "03. KALIB: P3 (s/ml)"
+    id: c3
+    mode: BOX
+    min_value: 0
+    max_value: 20
+    step: 0.01
+    initial_value: 3.0
+    optimistic: true
+    restore_value: yes
+  - platform: template
+    name: "03. KALIB: P4 (s/ml)"
+    id: c4
+    mode: BOX
+    min_value: 0
+    max_value: 20
+    step: 0.01
+    initial_value: 3.0
+    optimistic: true
+    restore_value: yes
+  - platform: template
+    name: "03. KALIB: P5 (s/ml)"
+    id: c5
+    mode: BOX
+    min_value: 0
+    max_value: 20
+    step: 0.01
+    initial_value: 3.0
+    optimistic: true
+    restore_value: yes
+  - platform: template
+    name: "03. KALIB: P6 (s/ml)"
+    id: c6
+    mode: BOX
+    min_value: 0
+    max_value: 20
+    step: 0.01
+    initial_value: 3.0
+    optimistic: true
+    restore_value: yes
+
+  # DAWKI
+  - platform: template
+    name: "04. DAWKA: P1 (ml)"
+    id: d1
+    mode: BOX
+    min_value: 0
+    max_value: 100
+    step: 0.1
+    optimistic: true
+    restore_value: yes
+  - platform: template
+    name: "04. DAWKA: P2 (ml)"
+    id: d2
+    mode: BOX
+    min_value: 0
+    max_value: 100
+    step: 0.1
+    optimistic: true
+    restore_value: yes
+  - platform: template
+    name: "04. DAWKA: P3 (ml)"
+    id: d3
+    mode: BOX
+    min_value: 0
+    max_value: 100
+    step: 0.1
+    optimistic: true
+    restore_value: yes
+  - platform: template
+    name: "04. DAWKA: P4 (ml)"
+    id: d4
+    mode: BOX
+    min_value: 0
+    max_value: 100
+    step: 0.1
+    optimistic: true
+    restore_value: yes
+  - platform: template
+    name: "04. DAWKA: P5 (ml)"
+    id: d5
+    mode: BOX
+    min_value: 0
+    max_value: 100
+    step: 0.1
+    optimistic: true
+    restore_value: yes
+  - platform: template
+    name: "04. DAWKA: P6 (ml)"
+    id: d6
+    mode: BOX
+    min_value: 0
+    max_value: 100
+    step: 0.1
+    optimistic: true
+    restore_value: yes
+
+  # GODZINY
+  - platform: template
+    name: "05. CZAS: P1 (h)"
+    id: h_p1
+    mode: BOX
+    min_value: 0
+    max_value: 23
+    step: 1
+    optimistic: true
+    restore_value: yes
+  - platform: template
+    name: "05. CZAS: P2 (h)"
+    id: h_p2
+    mode: BOX
+    min_value: 0
+    max_value: 23
+    step: 1
+    optimistic: true
+    restore_value: yes
+  - platform: template
+    name: "05. CZAS: P3 (h)"
+    id: h_p3
+    mode: BOX
+    min_value: 0
+    max_value: 23
+    step: 1
+    optimistic: true
+    restore_value: yes
+  - platform: template
+    name: "05. CZAS: P4 (h)"
+    id: h_p4
+    mode: BOX
+    min_value: 0
+    max_value: 23
+    step: 1
+    optimistic: true
+    restore_value: yes
+  - platform: template
+    name: "05. CZAS: P5 (h)"
+    id: h_p5
+    mode: BOX
+    min_value: 0
+    max_value: 23
+    step: 1
+    optimistic: true
+    restore_value: yes
+  - platform: template
+    name: "05. CZAS: P6 (h)"
+    id: h_p6
+    mode: BOX
+    min_value: 0
+    max_value: 23
+    step: 1
+    optimistic: true
+    restore_value: yes
+
+# --- PRZYCISKI (Zaktualizowane o osobne REFILL) ---
+button:
+  # Sekcja A - Ręczne dozowanie dawki ustawionej w polu DAWKA
+  - platform: template
+    name: "A. DOZUJ: P1"
+    on_press: [script.execute: script_p1]
+  - platform: template
+    name: "A. DOZUJ: P2"
+    on_press: [script.execute: script_p2]
+  - platform: template
+    name: "A. DOZUJ: P3"
+    on_press: [script.execute: script_p3]
+  - platform: template
+    name: "A. DOZUJ: P4"
+    on_press: [script.execute: script_p4]
+  - platform: template
+    name: "A. DOZUJ: P5"
+    on_press: [script.execute: script_p5]
+  - platform: template
+    name: "A. DOZUJ: P6"
+    on_press: [script.execute: script_p6]
+
+  # Sekcja B - Resetowanie poziomu butelki dla każdej pompy z osobna
+  - platform: template
+    name: "B. REFILL: P1 (1000ml)"
+    on_press: 
+      - lambda: |-
+          id(bottle_p1).publish_state(1000.0);
+          global_preferences->sync(); // <--- Zapisz reset butelki
+  - platform: template
+    name: "B. REFILL: P2 (1000ml)"
+    on_press: 
+      - lambda: |-
+          id(bottle_p2).publish_state(1000.0);
+          global_preferences->sync(); // <--- Zapisz reset butelki
+  - platform: template
+    name: "B. REFILL: P3 (1000ml)"
+    on_press: 
+      - lambda: |-
+          id(bottle_p3).publish_state(1000.0);
+          global_preferences->sync(); // <--- Zapisz reset butelki
+  - platform: template
+    name: "B. REFILL: P4 (1000ml)"
+    on_press: 
+      - lambda: |-
+          id(bottle_p4).publish_state(1000.0);
+          global_preferences->sync(); // <--- Zapisz reset butelki
+  - platform: template
+    name: "B. REFILL: P5 (1000ml)"
+    on_press: 
+      - lambda: |-
+          id(bottle_p5).publish_state(1000.0);
+          global_preferences->sync(); // <--- Zapisz reset butelki
+  - platform: template
+    name: "B. REFILL: P6 (1000ml)"
+    on_press: 
+      - lambda: |-
+          id(bottle_p6).publish_state(1000.0);
+          global_preferences->sync(); // <--- Zapisz reset butelki
+
+  # Przycisk zbiorczy dla wygody
+  - platform: template
+    name: "B. REFILL: Wszystkie (1000ml)"
+    on_press:
+      - lambda: |-
+          id(bottle_p1).publish_state(1000.0);
+          id(bottle_p2).publish_state(1000.0);
+          id(bottle_p3).publish_state(1000.0);
+          id(bottle_p4).publish_state(1000.0);
+          id(bottle_p5).publish_state(1000.0);
+          id(bottle_p6).publish_state(1000.0);
+          global_preferences->sync(); // <--- Zapisuje wszystkie 6 butelek jednym ruchem
+
+  # Sekcja C - Testy czasowe
+  - platform: template
+    name: "C. TEST 10s: P1"
+    on_press: [switch.turn_on: p1, delay: 10s, switch.turn_off: p1]
+  - platform: template
+    name: "C. TEST 10s: P2"
+    on_press: [switch.turn_on: p2, delay: 10s, switch.turn_off: p2]
+  - platform: template
+    name: "C. TEST 10s: P3"
+    on_press: [switch.turn_on: p3, delay: 10s, switch.turn_off: p3]
+  - platform: template
+    name: "C. TEST 10s: P4"
+    on_press: [switch.turn_on: p4, delay: 10s, switch.turn_off: p4]
+  - platform: template
+    name: "C. TEST 10s: P5"
+    on_press: [switch.turn_on: p5, delay: 10s, switch.turn_off: p5]
+  - platform: template
+    name: "C. TEST 10s: P6"
+    on_press: [switch.turn_on: p6, delay: 10s, switch.turn_off: p6]
+
+
+# --- WYJŚCIA FIZYCZNE ---
+switch:
+  - platform: gpio
+    pin: 13
+    id: p1
+    name: "Pompa 1"
+    restore_mode: ALWAYS_OFF
+  - platform: gpio
+    pin: 12
+    id: p2
+    name: "Pompa 2"
+    restore_mode: ALWAYS_OFF
+  - platform: gpio
+    pin: 14
+    id: p3
+    name: "Pompa 3"
+    restore_mode: ALWAYS_OFF
+  - platform: gpio
+    pin: 27
+    id: p4
+    name: "Pompa 4"
+    restore_mode: ALWAYS_OFF
+  - platform: gpio
+    pin: 26
+    id: p5
+    name: "Pompa 5"
+    restore_mode: ALWAYS_OFF
+  - platform: gpio
+    pin: 25
+    id: p6
+    name: "Pompa 6"
+    restore_mode: ALWAYS_OFF
