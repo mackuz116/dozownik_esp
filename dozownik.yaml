@@ -64,34 +64,63 @@ time:
   - platform: ds1307
     id: ds_time
     timezone: "Europe/Warsaw"
-    update_interval: 15min
+    update_interval: 1min
     on_time:
       - seconds: 0
-        minutes: 0
-        hours: /1 
         then:
+          # Pompa 1
           - if:
-              condition: { lambda: 'return id(ds_time).now().hour == (int)id(h_p1).state;' }
-              then: [script.execute: script_p1]
+              condition:
+                lambda: |-
+                  auto now = id(ds_time).now();
+                  return (now.hour == (int)id(h_p1).state) && (now.minute == (int)id(m_p1).state);
+              then:
+                - script.execute: script_p1
+          # Pompa 2
           - if:
-              condition: { lambda: 'return id(ds_time).now().hour == (int)id(h_p2).state;' }
-              then: [script.execute: script_p2]
+              condition:
+                lambda: |-
+                  auto now = id(ds_time).now();
+                  return (now.hour == (int)id(h_p2).state) && (now.minute == (int)id(m_p2).state);
+              then:
+                - script.execute: script_p2
+          # Pompa 3
           - if:
-              condition: { lambda: 'return id(ds_time).now().hour == (int)id(h_p3).state;' }
-              then: [script.execute: script_p3]
+              condition:
+                lambda: |-
+                  auto now = id(ds_time).now();
+                  return (now.hour == (int)id(h_p3).state) && (now.minute == (int)id(m_p3).state);
+              then:
+                - script.execute: script_p3
+          # Pompa 4
           - if:
-              condition: { lambda: 'return id(ds_time).now().hour == (int)id(h_p4).state;' }
-              then: [script.execute: script_p4]
+              condition:
+                lambda: |-
+                  auto now = id(ds_time).now();
+                  return (now.hour == (int)id(h_p4).state) && (now.minute == (int)id(m_p4).state);
+              then:
+                - script.execute: script_p4
+          # Pompa 5
           - if:
-              condition: { lambda: 'return id(ds_time).now().hour == (int)id(h_p5).state;' }
-              then: [script.execute: script_p5]
+              condition:
+                lambda: |-
+                  auto now = id(ds_time).now();
+                  return (now.hour == (int)id(h_p5).state) && (now.minute == (int)id(m_p5).state);
+              then:
+                - script.execute: script_p5
+          # Pompa 6
           - if:
-              condition: { lambda: 'return id(ds_time).now().hour == (int)id(h_p6).state;' }
-              then: [script.execute: script_p6]
-
+              condition:
+                lambda: |-
+                  auto now = id(ds_time).now();
+                  return (now.hour == (int)id(h_p6).state) && (now.minute == (int)id(m_p6).state);
+              then:
+                - script.execute: script_p6
+          
+ 
   - platform: sntp
     id: sntp_time
-
+    timezone: "Europe/Warsaw"
 
 sensor:
   - platform: template
@@ -556,6 +585,61 @@ number:
     mode: BOX
     min_value: 0
     max_value: 23
+    step: 1
+    optimistic: true
+    restore_value: yes
+  # MINUTY DOZOWANIA (P1 - P6)
+  - platform: template
+    name: "05. CZAS: P1 (min)"
+    id: m_p1
+    mode: BOX
+    min_value: 0
+    max_value: 59
+    step: 1
+    optimistic: true
+    restore_value: yes
+  - platform: template
+    name: "05. CZAS: P2 (min)"
+    id: m_p2
+    mode: BOX
+    min_value: 0
+    max_value: 59
+    step: 1
+    optimistic: true
+    restore_value: yes
+  - platform: template
+    name: "05. CZAS: P3 (min)"
+    id: m_p3
+    mode: BOX
+    min_value: 0
+    max_value: 59
+    step: 1
+    optimistic: true
+    restore_value: yes
+  - platform: template
+    name: "05. CZAS: P4 (min)"
+    id: m_p4
+    mode: BOX
+    min_value: 0
+    max_value: 59
+    step: 1
+    optimistic: true
+    restore_value: yes
+  - platform: template
+    name: "05. CZAS: P5 (min)"
+    id: m_p5
+    mode: BOX
+    min_value: 0
+    max_value: 59
+    step: 1
+    optimistic: true
+    restore_value: yes
+  - platform: template
+    name: "05. CZAS: P6 (min)"
+    id: m_p6
+    mode: BOX
+    min_value: 0
+    max_value: 59
     step: 1
     optimistic: true
     restore_value: yes
