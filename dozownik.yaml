@@ -47,7 +47,7 @@ logger:
 
 
 
-# odkomentować po odpaleniu czujników
+# odkomentować po odpaleniu czujnikówsssddd
 # interval:
 #   - interval: 10min
 #     then:
