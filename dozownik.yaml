@@ -8,6 +8,7 @@ esp32:
     type: arduino
 
 
+
 # 1. Włączamy obsługę zapytań HTTP
 http_request:
   useragent: esphome/device
@@ -15,7 +16,7 @@ http_request:
   verify_ssl: false  # To uciszy błąd kompilatora
 
 preferences:
-  flash_write_interval: 0s  # Wyłączamy auto-zapis (używamy Twojego sync)
+  flash_write_interval: 1min  # Wyłączamy auto-zapis (używamy Twojego sync)
 
 wifi:
   ssid: "MacKuz_20"
@@ -151,7 +152,6 @@ script:
       - switch.turn_off: p1
       - lambda: |-
           id(bottle_p1).publish_state(max(0.0f, id(bottle_p1).state - id(d1).state));
-          global_preferences->sync();
         
   - id: script_p2
     mode: queued
@@ -161,7 +161,7 @@ script:
       - switch.turn_off: p2
       - lambda: |-
           id(bottle_p2).publish_state(max(0.0f, id(bottle_p2).state - id(d2).state));
-          global_preferences->sync();
+
 
   - id: script_p3
     mode: queued
@@ -171,7 +171,7 @@ script:
       - switch.turn_off: p3
       - lambda: |-
           id(bottle_p3).publish_state(max(0.0f, id(bottle_p3).state - id(d3).state));
-          global_preferences->sync();
+
 
   - id: script_p4
     mode: queued
@@ -181,7 +181,7 @@ script:
       - switch.turn_off: p4
       - lambda: |- 
           id(bottle_p4).publish_state(max(0.0f, id(bottle_p4).state - id(d4).state));
-          global_preferences->sync();
+
 
 
   - id: script_p5
@@ -192,7 +192,7 @@ script:
       - switch.turn_off: p5
       - lambda: |-
           id(bottle_p5).publish_state(max(0.0f, id(bottle_p5).state - id(d5).state));
-          global_preferences->sync();
+
 
   - id: script_p6
     mode: queued
@@ -202,7 +202,7 @@ script:
       - switch.turn_off: p6
       - lambda: |-
           id(bottle_p6).publish_state(max(0.0f, id(bottle_p6).state - id(d6).state));
-          global_preferences->sync();
+
 
 
 
@@ -359,7 +359,7 @@ number:
     step: 1
     optimistic: true
     restore_value: yes
-    
+    initial_value: 1000
 
   - platform: template
     name: "02. BUTELKA: P2 (ml)"
@@ -370,6 +370,7 @@ number:
     step: 1
     optimistic: true
     restore_value: yes
+    initial_value: 1000
 
   - platform: template
     name: "02. BUTELKA: P3 (ml)"
@@ -380,6 +381,7 @@ number:
     step: 1
     optimistic: true
     restore_value: yes
+    initial_value: 1000
     
 
   - platform: template
@@ -391,6 +393,7 @@ number:
     step: 1
     optimistic: true
     restore_value: yes
+    initial_value: 1000
     
 
   - platform: template
@@ -402,6 +405,7 @@ number:
     step: 1
     optimistic: true
     restore_value: yes
+    initial_value: 1000
     
 
   - platform: template
@@ -413,6 +417,7 @@ number:
     step: 1
     optimistic: true
     restore_value: yes
+    initial_value: 1000
     
 
   # KALIBRACJA
