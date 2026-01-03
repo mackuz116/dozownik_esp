@@ -123,6 +123,7 @@ time:
     id: sntp_time
     timezone: "Europe/Warsaw"
 
+
 sensor:
   - platform: template
     name: "Manualny TDS"
@@ -144,6 +145,15 @@ sensor:
 
 # --- SKRYPTY DAWKOWANIA ---
 script:
+  # - id: script_p1
+  #   mode: queued
+  #   then:
+  #     - switch.turn_on: p1
+  #     - delay: !lambda "return id(d1).state * id(c1).state * 1000;"
+  #     - switch.turn_off: p1
+  #     - lambda: |-
+  #         id(p1_level).publish_state(max(0.0f, id(p1_level).state - id(d1).state));
+
   - id: script_p1
     mode: queued
     then:
@@ -151,7 +161,10 @@ script:
       - delay: !lambda "return id(d1).state * id(c1).state * 1000;"
       - switch.turn_off: p1
       - lambda: |-
-          id(bottle_p1).publish_state(max(0.0f, id(bottle_p1).state - id(d1).state));
+          auto call = id(p1_level).make_call();
+          call.set_value(max(0.0f, id(p1_level).state - id(d1).state));
+          call.perform();
+          global_preferences->sync(); // <--- Teraz to ma sens!
         
   - id: script_p2
     mode: queued
@@ -160,7 +173,10 @@ script:
       - delay: !lambda "return id(d2).state * id(c2).state * 1000;"
       - switch.turn_off: p2
       - lambda: |-
-          id(bottle_p2).publish_state(max(0.0f, id(bottle_p2).state - id(d2).state));
+          auto call = id(p2_level).make_call();
+          call.set_value(max(0.0f, id(p2_level).state - id(d2).state));
+          call.perform();
+          global_preferences->sync(); // <--- Teraz to ma sens!
 
 
   - id: script_p3
@@ -170,7 +186,10 @@ script:
       - delay: !lambda "return id(d3).state * id(c3).state * 1000;"
       - switch.turn_off: p3
       - lambda: |-
-          id(bottle_p3).publish_state(max(0.0f, id(bottle_p3).state - id(d3).state));
+          auto call = id(p3_level).make_call();
+          call.set_value(max(0.0f, id(p3_level).state - id(d3).state));
+          call.perform();
+          global_preferences->sync(); // <--- Teraz to ma sens!
 
 
   - id: script_p4
@@ -180,7 +199,11 @@ script:
       - delay: !lambda "return id(d4).state * id(c4).state * 1000;"
       - switch.turn_off: p4
       - lambda: |- 
-          id(bottle_p4).publish_state(max(0.0f, id(bottle_p4).state - id(d4).state));
+          auto call = id(p4_level).make_call();
+          call.set_value(max(0.0f, id(p4_level).state - id(d4).state));
+          call.perform();
+          global_preferences->sync(); // <--- Teraz to ma sens!
+
 
 
 
@@ -191,7 +214,11 @@ script:
       - delay: !lambda "return id(d5).state * id(c5).state * 1000;"
       - switch.turn_off: p5
       - lambda: |-
-          id(bottle_p5).publish_state(max(0.0f, id(bottle_p5).state - id(d5).state));
+          auto call = id(p5_level).make_call();
+          call.set_value(max(0.0f, id(p5_level).state - id(d5).state));
+          call.perform();
+          global_preferences->sync(); // <--- Teraz to ma sens!
+
 
 
   - id: script_p6
@@ -201,9 +228,10 @@ script:
       - delay: !lambda "return id(d6).state * id(c6).state * 1000;"
       - switch.turn_off: p6
       - lambda: |-
-          id(bottle_p6).publish_state(max(0.0f, id(bottle_p6).state - id(d6).state));
-
-
+          auto call = id(p6_level).make_call();
+          call.set_value(max(0.0f, id(p6_level).state - id(d6).state));
+          call.perform();
+          global_preferences->sync(); // <--- Teraz to ma sens!
 
 
 display:
@@ -218,9 +246,9 @@ display:
       // Linia 2: Rotacja butelek (z funkcją MX dla 100%)
       if ((millis() % 10000) < 5000) {
         // Pompy 1, 2, 3
-        float p1 = id(bottle_p1).state / 10.0;
-        float p2 = id(bottle_p2).state / 10.0;
-        float p3 = id(bottle_p3).state / 10.0;
+        float p1 = id(p1_level).state / 10.0;
+        float p2 = id(p2_level).state / 10.0;
+        float p3 = id(p3_level).state / 10.0;
         
         it.printf(0, 1, "P1:%s%% P2:%s%% P3:%s%%", 
           (p1 >= 100.0 ? "MX" : str_sprintf("%2.0f", p1).c_str()),
@@ -228,9 +256,9 @@ display:
           (p3 >= 100.0 ? "MX" : str_sprintf("%2.0f", p3).c_str()));
       } else {
         // Pompy 4, 5, 6
-        float p4 = id(bottle_p4).state / 10.0;
-        float p5 = id(bottle_p5).state / 10.0;
-        float p6 = id(bottle_p6).state / 10.0;
+        float p4 = id(p4_level).state / 10.0;
+        float p5 = id(p5_level).state / 10.0;
+        float p6 = id(p6_level).state / 10.0;
         
         it.printf(0, 1, "P4:%s%% P5:%s%% P6:%s%%", 
           (p4 >= 100.0 ? "MX" : str_sprintf("%2.0f", p4).c_str()),
@@ -285,10 +313,10 @@ text_sensor:
     name: "02. POZIOM: Mikro [P1]"
     id: bar_p1
     lambda: |-
-      int dots = (id(bottle_p1).state / 1000.0) * 10.0;
+      int dots = (id(p1_level).state / 1000.0) * 10.0;
       std::string bar = "[";
       for(int i=0; i<10; i++) { if(i < dots) bar += "█"; else bar += "░"; }
-      bar += "] " + to_string((int)((id(bottle_p1).state / 1000.0) * 100.0)) + "%";
+      bar += "] " + to_string((int)((id(p1_level).state / 1000.0) * 100.0)) + "%";
       return bar;
     update_interval: 5s
 
@@ -296,10 +324,10 @@ text_sensor:
     name: "02. POZIOM: Makro [P2]"
     id: bar_p2
     lambda: |-
-      int dots = (id(bottle_p2).state / 1000.0) * 10.0;
+      int dots = (id(p2_level).state / 1000.0) * 10.0;
       std::string bar = "[";
       for(int i=0; i<10; i++) { if(i < dots) bar += "█"; else bar += "░"; }
-      bar += "] " + to_string((int)((id(bottle_p2).state / 1000.0) * 100.0)) + "%";
+      bar += "] " + to_string((int)((id(p2_level).state / 1000.0) * 100.0)) + "%";
       return bar;
     update_interval: 5s
 
@@ -307,10 +335,10 @@ text_sensor:
     name: "02. POZIOM: Potas [P3]"
     id: bar_p3
     lambda: |-
-      int dots = (id(bottle_p3).state / 1000.0) * 10.0;
+      int dots = (id(p3_level).state / 1000.0) * 10.0;
       std::string bar = "[";
       for(int i=0; i<10; i++) { if(i < dots) bar += "█"; else bar += "░"; }
-      bar += "] " + to_string((int)((id(bottle_p3).state / 1000.0) * 100.0)) + "%";
+      bar += "] " + to_string((int)((id(p3_level).state / 1000.0) * 100.0)) + "%";
       return bar;
     update_interval: 5s
 
@@ -318,10 +346,10 @@ text_sensor:
     name: "02. POZIOM: Carbo [P4]"
     id: bar_p4
     lambda: |-
-      int dots = (id(bottle_p4).state / 1000.0) * 10.0;
+      int dots = (id(p4_level).state / 1000.0) * 10.0;
       std::string bar = "[";
       for(int i=0; i<10; i++) { if(i < dots) bar += "█"; else bar += "░"; }
-      bar += "] " + to_string((int)((id(bottle_p4).state / 1000.0) * 100.0)) + "%";
+      bar += "] " + to_string((int)((id(p4_level).state / 1000.0) * 100.0)) + "%";
       return bar;
     update_interval: 5s
 
@@ -329,10 +357,10 @@ text_sensor:
     name: "02. POZIOM: Magnez [P5]"
     id: bar_p5
     lambda: |-
-      int dots = (id(bottle_p5).state / 1000.0) * 10.0;
+      int dots = (id(p5_level).state / 1000.0) * 10.0;
       std::string bar = "[";
       for(int i=0; i<10; i++) { if(i < dots) bar += "█"; else bar += "░"; }
-      bar += "] " + to_string((int)((id(bottle_p5).state / 1000.0) * 100.0)) + "%";
+      bar += "] " + to_string((int)((id(p5_level).state / 1000.0) * 100.0)) + "%";
       return bar;
     update_interval: 5s
 
@@ -340,10 +368,10 @@ text_sensor:
     name: "02. POZIOM: Nawóz 6 [P6]"
     id: bar_p6
     lambda: |-
-      int dots = (id(bottle_p6).state / 1000.0) * 10.0;
+      int dots = (id(p6_level).state / 1000.0) * 10.0;
       std::string bar = "[";
       for(int i=0; i<10; i++) { if(i < dots) bar += "█"; else bar += "░"; }
-      bar += "] " + to_string((int)((id(bottle_p6).state / 1000.0) * 100.0)) + "%";
+      bar += "] " + to_string((int)((id(p6_level).state / 1000.0) * 100.0)) + "%";
       return bar;
     update_interval: 5s
 
@@ -352,7 +380,7 @@ number:
   # POJEMNIKI (1000ml)
   - platform: template
     name: "02. BUTELKA: P1 (ml)"
-    id: bottle_p1
+    id: p1_level
     mode: BOX
     min_value: 0
     max_value: 1000
@@ -363,7 +391,7 @@ number:
 
   - platform: template
     name: "02. BUTELKA: P2 (ml)"
-    id: bottle_p2
+    id: p2_level
     mode: BOX
     min_value: 0
     max_value: 1000
@@ -374,7 +402,7 @@ number:
 
   - platform: template
     name: "02. BUTELKA: P3 (ml)"
-    id: bottle_p3
+    id: p3_level
     mode: BOX
     min_value: 0
     max_value: 1000
@@ -386,7 +414,7 @@ number:
 
   - platform: template
     name: "02. BUTELKA: P4 (ml)"
-    id: bottle_p4
+    id: p4_level
     mode: BOX
     min_value: 0
     max_value: 1000
@@ -398,7 +426,7 @@ number:
 
   - platform: template
     name: "02. BUTELKA: P5 (ml)"
-    id: bottle_p5
+    id: p5_level
     mode: BOX
     min_value: 0
     max_value: 1000
@@ -410,7 +438,7 @@ number:
 
   - platform: template
     name: "02. BUTELKA: P6 (ml)"
-    id: bottle_p6
+    id: p6_level
     mode: BOX
     min_value: 0
     max_value: 1000
@@ -676,37 +704,37 @@ button:
     name: "B. REFILL: P1 (1000ml)"
     on_press: 
       - lambda: |-
-          id(bottle_p1).publish_state(1000.0);
+          id(p1_level).publish_state(1000.0);
           global_preferences->sync(); // <--- Zapisz reset butelki
   - platform: template
     name: "B. REFILL: P2 (1000ml)"
     on_press: 
       - lambda: |-
-          id(bottle_p2).publish_state(1000.0);
+          id(p2_level).publish_state(1000.0);
           global_preferences->sync(); // <--- Zapisz reset butelki
   - platform: template
     name: "B. REFILL: P3 (1000ml)"
     on_press: 
       - lambda: |-
-          id(bottle_p3).publish_state(1000.0);
+          id(p3_level).publish_state(1000.0);
           global_preferences->sync(); // <--- Zapisz reset butelki
   - platform: template
     name: "B. REFILL: P4 (1000ml)"
     on_press: 
       - lambda: |-
-          id(bottle_p4).publish_state(1000.0);
+          id(p4_level).publish_state(1000.0);
           global_preferences->sync(); // <--- Zapisz reset butelki
   - platform: template
     name: "B. REFILL: P5 (1000ml)"
     on_press: 
       - lambda: |-
-          id(bottle_p5).publish_state(1000.0);
+          id(p5_level).publish_state(1000.0);
           global_preferences->sync(); // <--- Zapisz reset butelki
   - platform: template
     name: "B. REFILL: P6 (1000ml)"
     on_press: 
       - lambda: |-
-          id(bottle_p6).publish_state(1000.0);
+          id(p6_level).publish_state(1000.0);
           global_preferences->sync(); // <--- Zapisz reset butelki
 
   # Przycisk zbiorczy dla wygody
@@ -714,12 +742,12 @@ button:
     name: "B. REFILL: Wszystkie (1000ml)"
     on_press:
       - lambda: |-
-          id(bottle_p1).publish_state(1000.0);
-          id(bottle_p2).publish_state(1000.0);
-          id(bottle_p3).publish_state(1000.0);
-          id(bottle_p4).publish_state(1000.0);
-          id(bottle_p5).publish_state(1000.0);
-          id(bottle_p6).publish_state(1000.0);
+          id(p1_level).publish_state(1000.0);
+          id(p2_level).publish_state(1000.0);
+          id(p3_level).publish_state(1000.0);
+          id(p4_level).publish_state(1000.0);
+          id(p5_level).publish_state(1000.0);
+          id(p6_level).publish_state(1000.0);
           global_preferences->sync(); // <--- Zapisuje wszystkie 6 butelek jednym ruchem
 
   # Sekcja C - Testy czasowe
