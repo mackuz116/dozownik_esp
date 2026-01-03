@@ -43,6 +43,11 @@ i2c:
   scl: 22
   scan: true
 
+
+ads1115:
+  - address: 0x48
+    id: ads_hub
+
 logger:
   level: DEBUG
 
@@ -142,7 +147,30 @@ sensor:
     unit_of_measurement: "°C"
     lambda: 'return 24.5;'
 
+  - platform: ads1115
+    multiplexer: 'A0_GND'
+    gain: 4.096
+    name: "TDS Voltage"
+    id: tds_voltage
+    update_interval: 5s
+    unit_of_measurement: "V"
 
+  - platform: template
+    name: "TDS Akwarium"
+    id: tds_real
+    unit_of_measurement: "ppm"
+    accuracy_decimals: 0
+    lambda: |-
+      float voltage = id(tds_voltage).state;
+      if (voltage < 0.1) return 0.0;
+      
+      // Wielomian bazowy
+      float base = (133.42 * pow(voltage, 3) - 255.86 * pow(voltage, 2) + 857.39 * voltage);
+      
+      // Twój indywidualny mnożnik kalibracji (370ppm przy 0.584V)
+      return base * 0.85;
+    update_interval: 5s
+        
 # --- SKRYPTY DAWKOWANIA ---
 script:
   # - id: script_p1
@@ -271,7 +299,8 @@ display:
         id(ph_sensor_id).state, id(temp_sensor_id).state);
       
       // Linia 4: TDS i Info o zbiorniku
-      it.printf(0, 3, "TDS:%3.0f ppm", id(tds_manual_id).state);
+      it.printf(0, 3, "TDS:%3.0f ppm", id(tds_real).state);
+
 
       it.printf(14, 3, "%c%c%c%c%c%c", 
         id(p1).state ? '1' : '.',
