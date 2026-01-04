@@ -23,12 +23,6 @@ wifi:
   password: "qazxswedcvfrt"
   power_save_mode: NONE
 
-# --- MAGISTRALA SPI ---
-spi:
-  clk_pin: 18
-  mosi_pin: 23
-  miso_pin: 19
-
 web_server:
   port: 80
   version: 2
@@ -48,6 +42,10 @@ ads1115:
   - address: 0x48
     id: ads_hub
 
+one_wire:
+  - platform: gpio
+    pin: GPIO4  # Zmień na pin, do którego fizycznie wpiąłeś żółty kabel
+
 logger:
   level: DEBUG
 
@@ -63,7 +61,7 @@ logger:
 #             // TU WKLEJ SWÓJ LINK Z GOOGLE (pomiędzy cudzysłów)
 #             const char* base_url = "https://script.google.com/macros/s/AKfycbxi8G0N5jUF9fDgPCwcEO6nfc6wcEVyZff2Etf-ZoIC1acMMf-AaNcCrpLiRXcuXPs4/exec";
 #             sprintf(url, "%s?temp=%.1f&ph=%.2f&tds=%.0f", 
-#                     base_url, id(temp_sensor_id).state, id(ph_sensor_id).state, id(tds_manual_id).state);
+#                     base_url, id(temp_akwarium).state, id(ph_sensor_id).state, id(tds_real).state);
 #             return url;
 
 time:
@@ -130,23 +128,12 @@ time:
 
 
 sensor:
-  - platform: template
-    name: "Manualny TDS"
-    id: tds_manual_id
-    unit_of_measurement: "ppm"
-    lambda: 'return 245.0;' # Tu na razie wpisane na sztywno
-
+  
   - platform: template
     name: "Manualne pH"
     id: ph_sensor_id
     lambda: 'return 6.85;'
-
-  - platform: template
-    name: "Manualna Temp"
-    id: temp_sensor_id
-    unit_of_measurement: "°C"
-    lambda: 'return 24.5;'
-
+  
   - platform: ads1115
     multiplexer: 'A0_GND'
     gain: 4.096
@@ -155,6 +142,14 @@ sensor:
     update_interval: 5s
     unit_of_measurement: "V"
 
+  - platform: dallas_temp
+    name: "Temperatura Akwarium"
+    id: temp_akwarium
+    update_interval: 10s
+    unit_of_measurement: "°C"
+    accuracy_decimals: 1
+
+
   - platform: template
     name: "TDS Akwarium"
     id: tds_real
@@ -162,26 +157,25 @@ sensor:
     accuracy_decimals: 0
     lambda: |-
       float voltage = id(tds_voltage).state;
-      if (voltage < 0.1) return 0.0;
+      float temp = id(temp_akwarium).state;
       
-      // Wielomian bazowy
-      float base = (133.42 * pow(voltage, 3) - 255.86 * pow(voltage, 2) + 857.39 * voltage);
+      // Jeśli napięcie jest za niskie lub czujnik temp nie odczytał danych (NaN)
+      if (voltage < 0.1 || isnan(temp)) return 0.0;
       
-      // Twój indywidualny mnożnik kalibracji (370ppm przy 0.584V)
+      // Standardowy wzór na kompensację temperatury (odniesienie do 25°C)
+      // Współczynnik 0.02 (2%) jest optymalny dla wody akwariowej
+      float compensationCoefficient = 1.0 + 0.02 * (temp - 25.0);
+      float compensationVoltage = voltage / compensationCoefficient;
+      
+      // Obliczamy TDS z wielomianu bazowego
+      float base = (133.42 * pow(compensationVoltage, 3) - 255.86 * pow(compensationVoltage, 2) + 857.39 * compensationVoltage);
+      
+      // Twój indywidualny mnożnik kalibracji
       return base * 0.85;
-    update_interval: 5s
+    update_interval: 10s
         
 # --- SKRYPTY DAWKOWANIA ---
 script:
-  # - id: script_p1
-  #   mode: queued
-  #   then:
-  #     - switch.turn_on: p1
-  #     - delay: !lambda "return id(d1).state * id(c1).state * 1000;"
-  #     - switch.turn_off: p1
-  #     - lambda: |-
-  #         id(p1_level).publish_state(max(0.0f, id(p1_level).state - id(d1).state));
-
   - id: script_p1
     mode: queued
     then:
@@ -296,7 +290,7 @@ display:
       
       // Linia 3: PH i Temperatura (rozdzielone, z dużą ilością miejsca)
       it.printf(0, 2, "PH:%4.2f  Temp:%4.1fC", 
-        id(ph_sensor_id).state, id(temp_sensor_id).state);
+        id(ph_sensor_id).state, id(temp_akwarium).state);
       
       // Linia 4: TDS i Info o zbiorniku
       it.printf(0, 3, "TDS:%3.0f ppm", id(tds_real).state);
