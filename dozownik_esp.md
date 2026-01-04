@@ -1,4 +1,4 @@
-Dokumentacja:
+Dokumentacja:  
 
 Urządzenie	Pin ESP32 (GPIO)	Opis
 I2C SDA	    21	              Do LCD, RTC i ISO1640
