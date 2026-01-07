@@ -19,8 +19,8 @@ preferences:
   flash_write_interval: 1min  # Wyłączamy auto-zapis (używamy Twojego sync)
 
 wifi:
-  ssid: "MacKuz_20"
-  password: "qazxswedcvfrt"
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
   power_save_mode: NONE
 
 web_server:
@@ -77,7 +77,9 @@ time:
               condition:
                 lambda: |-
                   auto now = id(ds_time).now();
-                  return (now.hour == (int)id(h_p1).state) && (now.minute == (int)id(m_p1).state);
+                  int h = (int)id(h_p1).state;
+                  int m = (int)id(m_p1).state;
+                  return (now.hour == h && now.minute == m) && (h != 0 || m != 0);
               then:
                 - script.execute: script_p1
           # Pompa 2
@@ -85,7 +87,9 @@ time:
               condition:
                 lambda: |-
                   auto now = id(ds_time).now();
-                  return (now.hour == (int)id(h_p2).state) && (now.minute == (int)id(m_p2).state);
+                  int h = (int)id(h_p2).state;
+                  int m = (int)id(m_p2).state;
+                  return (now.hour == h && now.minute == m) && (h != 0 || m != 0);
               then:
                 - script.execute: script_p2
           # Pompa 3
@@ -93,7 +97,9 @@ time:
               condition:
                 lambda: |-
                   auto now = id(ds_time).now();
-                  return (now.hour == (int)id(h_p3).state) && (now.minute == (int)id(m_p3).state);
+                  int h = (int)id(h_p3).state;
+                  int m = (int)id(m_p3).state;
+                  return (now.hour == h && now.minute == m) && (h != 0 || m != 0);
               then:
                 - script.execute: script_p3
           # Pompa 4
@@ -101,7 +107,9 @@ time:
               condition:
                 lambda: |-
                   auto now = id(ds_time).now();
-                  return (now.hour == (int)id(h_p4).state) && (now.minute == (int)id(m_p4).state);
+                  int h = (int)id(h_p4).state;
+                  int m = (int)id(m_p4).state;
+                  return (now.hour == h && now.minute == m) && (h != 0 || m != 0);
               then:
                 - script.execute: script_p4
           # Pompa 5
@@ -109,7 +117,9 @@ time:
               condition:
                 lambda: |-
                   auto now = id(ds_time).now();
-                  return (now.hour == (int)id(h_p5).state) && (now.minute == (int)id(m_p5).state);
+                  int h = (int)id(h_p5).state;
+                  int m = (int)id(m_p5).state;
+                  return (now.hour == h && now.minute == m) && (h != 0 || m != 0);
               then:
                 - script.execute: script_p5
           # Pompa 6
@@ -117,11 +127,12 @@ time:
               condition:
                 lambda: |-
                   auto now = id(ds_time).now();
-                  return (now.hour == (int)id(h_p6).state) && (now.minute == (int)id(m_p6).state);
+                  int h = (int)id(h_p6).state;
+                  int m = (int)id(m_p6).state;
+                  return (now.hour == h && now.minute == m) && (h != 0 || m != 0);
               then:
                 - script.execute: script_p6
-          
- 
+
   - platform: sntp
     id: sntp_time
     timezone: "Europe/Warsaw"
@@ -802,7 +813,7 @@ switch:
     name: "Pompa 1"
     restore_mode: ALWAYS_OFF
   - platform: gpio
-    pin: 12
+    pin: 16
     id: p2
     name: "Pompa 2"
     restore_mode: ALWAYS_OFF
