@@ -28,6 +28,10 @@ web_server:
   version: 2
 
 api:
+  encryption:
+    key: !secret api_encryption_key
+  password: !secret ota_password
+
 
 ota:
   - platform: esphome
@@ -36,6 +40,7 @@ i2c:
   sda: 21
   scl: 22
   scan: true
+  frequency: 400kHz
 
 
 ads1115:
@@ -185,86 +190,91 @@ sensor:
       return base * 0.85;
     update_interval: 10s
         
-# --- SKRYPTY DAWKOWANIA ---
+# --- SKRYPTY DAWKOWANIA Z REGULACJĄ PRĘDKOŚCI I SOFT-STARTEM ---
 script:
   - id: script_p1
     mode: queued
     then:
-      - switch.turn_on: p1
+      - light.turn_on:
+          id: p1
+          brightness: !lambda "return id(p1_speed).state / 100.0;"
       - delay: !lambda "return id(d1).state * id(c1).state * 1000;"
-      - switch.turn_off: p1
+      - light.turn_off: p1
       - lambda: |-
           auto call = id(p1_level).make_call();
           call.set_value(max(0.0f, id(p1_level).state - id(d1).state));
           call.perform();
-          global_preferences->sync(); // <--- Teraz to ma sens!
-        
+          global_preferences->sync();
+
   - id: script_p2
     mode: queued
     then:
-      - switch.turn_on: p2
+      - light.turn_on:
+          id: p2
+          brightness: !lambda "return id(p2_speed).state / 100.0;"
       - delay: !lambda "return id(d2).state * id(c2).state * 1000;"
-      - switch.turn_off: p2
+      - light.turn_off: p2
       - lambda: |-
           auto call = id(p2_level).make_call();
           call.set_value(max(0.0f, id(p2_level).state - id(d2).state));
           call.perform();
-          global_preferences->sync(); // <--- Teraz to ma sens!
-
+          global_preferences->sync();
 
   - id: script_p3
     mode: queued
     then:
-      - switch.turn_on: p3
+      - light.turn_on:
+          id: p3
+          brightness: !lambda "return id(p3_speed).state / 100.0;"
       - delay: !lambda "return id(d3).state * id(c3).state * 1000;"
-      - switch.turn_off: p3
+      - light.turn_off: p3
       - lambda: |-
           auto call = id(p3_level).make_call();
           call.set_value(max(0.0f, id(p3_level).state - id(d3).state));
           call.perform();
-          global_preferences->sync(); // <--- Teraz to ma sens!
-
+          global_preferences->sync();
 
   - id: script_p4
     mode: queued
     then:
-      - switch.turn_on: p4
+      - light.turn_on:
+          id: p4
+          brightness: !lambda "return id(p4_speed).state / 100.0;"
       - delay: !lambda "return id(d4).state * id(c4).state * 1000;"
-      - switch.turn_off: p4
-      - lambda: |- 
+      - light.turn_off: p4
+      - lambda: |-
           auto call = id(p4_level).make_call();
           call.set_value(max(0.0f, id(p4_level).state - id(d4).state));
           call.perform();
-          global_preferences->sync(); // <--- Teraz to ma sens!
-
-
-
+          global_preferences->sync();
 
   - id: script_p5
     mode: queued
     then:
-      - switch.turn_on: p5
+      - light.turn_on:
+          id: p5
+          brightness: !lambda "return id(p5_speed).state / 100.0;"
       - delay: !lambda "return id(d5).state * id(c5).state * 1000;"
-      - switch.turn_off: p5
+      - light.turn_off: p5
       - lambda: |-
           auto call = id(p5_level).make_call();
           call.set_value(max(0.0f, id(p5_level).state - id(d5).state));
           call.perform();
-          global_preferences->sync(); // <--- Teraz to ma sens!
-
-
+          global_preferences->sync();
 
   - id: script_p6
     mode: queued
     then:
-      - switch.turn_on: p6
+      - light.turn_on:
+          id: p6
+          brightness: !lambda "return id(p6_speed).state / 100.0;"
       - delay: !lambda "return id(d6).state * id(c6).state * 1000;"
-      - switch.turn_off: p6
+      - light.turn_off: p6
       - lambda: |-
           auto call = id(p6_level).make_call();
           call.set_value(max(0.0f, id(p6_level).state - id(d6).state));
           call.perform();
-          global_preferences->sync(); // <--- Teraz to ma sens!
+          global_preferences->sync();
 
 
 display:
@@ -308,12 +318,12 @@ display:
 
 
       it.printf(14, 3, "%c%c%c%c%c%c", 
-        id(p1).state ? '1' : '.',
-        id(p2).state ? '2' : '.',
-        id(p3).state ? '3' : '.',
-        id(p4).state ? '4' : '.',
-        id(p5).state ? '5' : '.',
-        id(p6).state ? '6' : '.');
+        id(p1).remote_values.is_on() ? '1' : '.',
+        id(p2).remote_values.is_on() ? '2' : '.',
+        id(p3).remote_values.is_on() ? '3' : '.',
+        id(p4).remote_values.is_on() ? '4' : '.',
+        id(p5).remote_values.is_on() ? '5' : '.',
+        id(p6).remote_values.is_on() ? '6' : '.');
 
 # --- WIZUALIZACJA I SENSORY ---
 text_sensor:
@@ -355,7 +365,7 @@ text_sensor:
     update_interval: 5s
 
   - platform: template
-    name: "02. POZIOM: Makro [P2]"
+    name: "02. POZIOM: KNO3 [P2]"
     id: bar_p2
     lambda: |-
       int dots = (id(p2_level).state / 1000.0) * 10.0;
@@ -366,7 +376,7 @@ text_sensor:
     update_interval: 5s
 
   - platform: template
-    name: "02. POZIOM: Potas [P3]"
+    name: "02. POZIOM: K2SO4 [P3]"
     id: bar_p3
     lambda: |-
       int dots = (id(p3_level).state / 1000.0) * 10.0;
@@ -388,7 +398,7 @@ text_sensor:
     update_interval: 5s
 
   - platform: template
-    name: "02. POZIOM: Magnez [P5]"
+    name: "02. POZIOM: MgSO4 [P5]"
     id: bar_p5
     lambda: |-
       int dots = (id(p5_level).state / 1000.0) * 10.0;
@@ -399,7 +409,7 @@ text_sensor:
     update_interval: 5s
 
   - platform: template
-    name: "02. POZIOM: Nawóz 6 [P6]"
+    name: "02. POZIOM: MAKRO [P6]"
     id: bar_p6
     lambda: |-
       int dots = (id(p6_level).state / 1000.0) * 10.0;
@@ -711,6 +721,80 @@ number:
     optimistic: true
     restore_value: yes
 
+#  PRĘDKOŚCI POMP
+  - platform: template
+    name: "P1: Prędkość %"
+    id: p1_speed
+    min_value: 30
+    max_value: 100
+    step: 1
+    optimistic: true
+    initial_value: 100
+    restore_value: true
+    unit_of_measurement: "%"
+    mode: box
+
+  - platform: template
+    name: "P2: Prędkość %"
+    id: p2_speed
+    min_value: 30
+    max_value: 100
+    step: 1
+    optimistic: true
+    initial_value: 100
+    restore_value: true
+    unit_of_measurement: "%"
+    mode: box
+
+  - platform: template
+    name: "P3: Prędkość %"
+    id: p3_speed
+    min_value: 30
+    max_value: 100
+    step: 1
+    optimistic: true
+    initial_value: 100
+    restore_value: true
+    unit_of_measurement: "%"
+    mode: box
+
+  - platform: template
+    name: "P4: Prędkość %"
+    id: p4_speed
+    min_value: 30
+    max_value: 100
+    step: 1
+    optimistic: true
+    initial_value: 100
+    restore_value: true
+    unit_of_measurement: "%"
+    mode: box
+
+  - platform: template
+    name: "P5: Prędkość %"
+    id: p5_speed
+    min_value: 30
+    max_value: 100
+    step: 1
+    optimistic: true
+    initial_value: 100
+    restore_value: true
+    unit_of_measurement: "%"
+    mode: box
+
+  - platform: template
+    name: "P6: Prędkość %"
+    id: p6_speed
+    min_value: 30
+    max_value: 100
+    step: 1
+    optimistic: true
+    initial_value: 100
+    restore_value: true
+    unit_of_measurement: "%"
+    mode: box
+
+
 # --- PRZYCISKI (Zaktualizowane o osobne REFILL) ---
 button:
   # Sekcja A - Ręczne dozowanie dawki ustawionej w polu DAWKA
@@ -785,55 +869,128 @@ button:
           global_preferences->sync(); // <--- Zapisuje wszystkie 6 butelek jednym ruchem
 
   # Sekcja C - Testy czasowe
+  # - platform: template
+  #   name: "C. TEST 10s: P1"
+  #   on_press: [switch.turn_on: p1, delay: 10s, switch.turn_off: p1]
+  # - platform: template
+  #   name: "C. TEST 10s: P2"
+  #   on_press: [switch.turn_on: p2, delay: 10s, switch.turn_off: p2]
+  # - platform: template
+  #   name: "C. TEST 10s: P3"
+  #   on_press: [switch.turn_on: p3, delay: 10s, switch.turn_off: p3]
+  # - platform: template
+  #   name: "C. TEST 10s: P4"
+  #   on_press: [switch.turn_on: p4, delay: 10s, switch.turn_off: p4]
+  # - platform: template
+  #   name: "C. TEST 10s: P5"
+  #   on_press: [switch.turn_on: p5, delay: 10s, switch.turn_off: p5]
+  # - platform: template
+  #   name: "C. TEST 10s: P6"
+  #   on_press: [switch.turn_on: p6, delay: 10s, switch.turn_off: p6]
+
   - platform: template
     name: "C. TEST 10s: P1"
-    on_press: [switch.turn_on: p1, delay: 10s, switch.turn_off: p1]
+    on_press:
+      - light.turn_on:
+          id: p1
+          brightness: !lambda "return id(p1_speed).state / 100.0;"
+      - delay: 10s
+      - light.turn_off: p1
+
   - platform: template
     name: "C. TEST 10s: P2"
-    on_press: [switch.turn_on: p2, delay: 10s, switch.turn_off: p2]
+    on_press: 
+      - light.turn_on:
+          id: p2
+          brightness: !lambda "return id(p2_speed).state / 100.0;"
+      - delay: 10s
+      - light.turn_off: p2
+
   - platform: template
     name: "C. TEST 10s: P3"
-    on_press: [switch.turn_on: p3, delay: 10s, switch.turn_off: p3]
+    on_press: 
+      - light.turn_on:
+          id: p3
+          brightness: !lambda "return id(p3_speed).state / 100.0;"
+      - delay: 10s
+      - light.turn_off: p3
+  
   - platform: template
     name: "C. TEST 10s: P4"
-    on_press: [switch.turn_on: p4, delay: 10s, switch.turn_off: p4]
+    on_press: 
+      - light.turn_on:
+          id: p4
+          brightness: !lambda "return id(p4_speed).state / 100.0;"
+      - delay: 10s
+      - light.turn_off: p4
+
   - platform: template
     name: "C. TEST 10s: P5"
-    on_press: [switch.turn_on: p5, delay: 10s, switch.turn_off: p5]
+    on_press: 
+      - light.turn_on:
+          id: p5
+          brightness: !lambda "return id(p5_speed).state / 100.0;"
+      - delay: 10s
+      - light.turn_off: p5
+
   - platform: template
     name: "C. TEST 10s: P6"
-    on_press: [switch.turn_on: p6, delay: 10s, switch.turn_off: p6]
-
+    on_press: 
+      - light.turn_on:
+          id: p6
+          brightness: !lambda "return id(p6_speed).state / 100.0;"
+      - delay: 10s
+      - light.turn_off: p6
 
 # --- WYJŚCIA FIZYCZNE ---
-switch:
-  - platform: gpio
+output:
+  - platform: ledc
     pin: 13
-    id: p1
-    name: "Pompa 1"
-    restore_mode: ALWAYS_OFF
-  - platform: gpio
+    id: out_p1
+  - platform: ledc
     pin: 16
-    id: p2
-    name: "Pompa 2"
-    restore_mode: ALWAYS_OFF
-  - platform: gpio
+    id: out_p2
+  - platform: ledc
     pin: 14
-    id: p3
-    name: "Pompa 3"
-    restore_mode: ALWAYS_OFF
-  - platform: gpio
+    id: out_p3
+  - platform: ledc
     pin: 27
-    id: p4
-    name: "Pompa 4"
-    restore_mode: ALWAYS_OFF
-  - platform: gpio
+    id: out_p4
+  - platform: ledc
     pin: 26
-    id: p5
-    name: "Pompa 5"
-    restore_mode: ALWAYS_OFF
-  - platform: gpio
+    id: out_p5
+  - platform: ledc
     pin: 25
-    id: p6
+    id: out_p6
+
+light:
+  - platform: monochromatic
+    output: out_p1
+    name: "Pompa 1"
+    id: p1
+    default_transition_length: 1s
+  - platform: monochromatic
+    output: out_p2
+    name: "Pompa 2"
+    id: p2
+    default_transition_length: 1s
+  - platform: monochromatic
+    output: out_p3
+    name: "Pompa 3"
+    id: p3
+    default_transition_length: 1s
+  - platform: monochromatic
+    output: out_p4
+    name: "Pompa 4"
+    id: p4
+    default_transition_length: 1s
+  - platform: monochromatic
+    output: out_p5
+    name: "Pompa 5"
+    id: p5
+    default_transition_length: 1s
+  - platform: monochromatic
+    output: out_p6
     name: "Pompa 6"
-    restore_mode: ALWAYS_OFF
+    id: p6
+    default_transition_length: 1s
