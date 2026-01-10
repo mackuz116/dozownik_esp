@@ -55,7 +55,6 @@ logger:
   level: DEBUG
 
 
-
 # odkomentować po odpaleniu czujnikówsssddd
 # interval:
 #   - interval: 10min
@@ -157,6 +156,24 @@ sensor:
     id: tds_voltage
     update_interval: 5s
     unit_of_measurement: "V"
+
+  - platform: ads1115
+    multiplexer: 'A1_GND'
+    gain: 4.096
+    name: "pH Akwarium"
+    id: ph_akwarium
+    unit_of_measurement: "pH"
+    accuracy_decimals: 2
+    update_interval: 5s
+    filters:
+      - calibrate_linear:
+          # (napięcie -> wartość pH)
+          - 3.155 -> 6.86
+          - 3.600 -> 4.01
+      - median: # Ten filtr usunie pojedyncze błędy (jak ten Error 263 z logów)
+          window_size: 7
+          send_every: 4
+          send_first_at: 1
 
   - platform: dallas_temp
     name: "Temperatura Akwarium"
