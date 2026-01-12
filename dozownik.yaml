@@ -65,7 +65,7 @@ logger:
 #             // TU WKLEJ SWÓJ LINK Z GOOGLE (pomiędzy cudzysłów)
 #             const char* base_url = "https://script.google.com/macros/s/AKfycbxi8G0N5jUF9fDgPCwcEO6nfc6wcEVyZff2Etf-ZoIC1acMMf-AaNcCrpLiRXcuXPs4/exec";
 #             sprintf(url, "%s?temp=%.1f&ph=%.2f&tds=%.0f", 
-#                     base_url, id(temp_akwarium).state, id(ph_sensor_id).state, id(tds_real).state);
+#                     base_url, id(temp_akwarium).state, id(ph_akwarium).state, id(tds_real).state);
 #             return url;
 
 time:
@@ -76,64 +76,129 @@ time:
     on_time:
       - seconds: 0
         then:
-          # Pompa 1
+          # --- POMPA 1 ---
           - if:
               condition:
                 lambda: |-
                   auto now = id(ds_time).now();
                   int h = (int)id(h_p1).state;
                   int m = (int)id(m_p1).state;
-                  return (now.hour == h && now.minute == m) && (h != 0 || m != 0);
+                  if (!((now.hour == h && now.minute == m) && (h != 0 || m != 0))) return false;
+                  
+                  int dow = now.day_of_week; 
+                  if (dow == 1) return id(p1_mon).state;
+                  if (dow == 2) return id(p1_tue).state;
+                  if (dow == 3) return id(p1_wed).state;
+                  if (dow == 4) return id(p1_thu).state;
+                  if (dow == 5) return id(p1_fri).state;
+                  if (dow == 6) return id(p1_sat).state;
+                  if (dow == 7) return id(p1_sun).state;
+                  return false;
               then:
                 - script.execute: script_p1
-          # Pompa 2
+
+          # --- POMPA 2 ---
           - if:
               condition:
                 lambda: |-
                   auto now = id(ds_time).now();
                   int h = (int)id(h_p2).state;
                   int m = (int)id(m_p2).state;
-                  return (now.hour == h && now.minute == m) && (h != 0 || m != 0);
+                  if (!((now.hour == h && now.minute == m) && (h != 0 || m != 0))) return false;
+
+                  int dow = now.day_of_week;
+                  if (dow == 1) return id(p2_mon).state;
+                  if (dow == 2) return id(p2_tue).state;
+                  if (dow == 3) return id(p2_wed).state;
+                  if (dow == 4) return id(p2_thu).state;
+                  if (dow == 5) return id(p2_fri).state;
+                  if (dow == 6) return id(p2_sat).state;
+                  if (dow == 7) return id(p2_sun).state;
+                  return false;
               then:
                 - script.execute: script_p2
-          # Pompa 3
+
+          # --- POMPA 3 ---
           - if:
               condition:
                 lambda: |-
                   auto now = id(ds_time).now();
                   int h = (int)id(h_p3).state;
                   int m = (int)id(m_p3).state;
-                  return (now.hour == h && now.minute == m) && (h != 0 || m != 0);
+                  if (!((now.hour == h && now.minute == m) && (h != 0 || m != 0))) return false;
+
+                  int dow = now.day_of_week;
+                  if (dow == 1) return id(p3_mon).state;
+                  if (dow == 2) return id(p3_tue).state;
+                  if (dow == 3) return id(p3_wed).state;
+                  if (dow == 4) return id(p3_thu).state;
+                  if (dow == 5) return id(p3_fri).state;
+                  if (dow == 6) return id(p3_sat).state;
+                  if (dow == 7) return id(p3_sun).state;
+                  return false;
               then:
                 - script.execute: script_p3
-          # Pompa 4
+
+          # --- POMPA 4 ---
           - if:
               condition:
                 lambda: |-
                   auto now = id(ds_time).now();
                   int h = (int)id(h_p4).state;
                   int m = (int)id(m_p4).state;
-                  return (now.hour == h && now.minute == m) && (h != 0 || m != 0);
+                  if (!((now.hour == h && now.minute == m) && (h != 0 || m != 0))) return false;
+
+                  int dow = now.day_of_week;
+                  if (dow == 1) return id(p4_mon).state;
+                  if (dow == 2) return id(p4_tue).state;
+                  if (dow == 3) return id(p4_wed).state;
+                  if (dow == 4) return id(p4_thu).state;
+                  if (dow == 5) return id(p4_fri).state;
+                  if (dow == 6) return id(p4_sat).state;
+                  if (dow == 7) return id(p4_sun).state;
+                  return false;
               then:
                 - script.execute: script_p4
-          # Pompa 5
+
+          # --- POMPA 5 ---
           - if:
               condition:
                 lambda: |-
                   auto now = id(ds_time).now();
                   int h = (int)id(h_p5).state;
                   int m = (int)id(m_p5).state;
-                  return (now.hour == h && now.minute == m) && (h != 0 || m != 0);
+                  if (!((now.hour == h && now.minute == m) && (h != 0 || m != 0))) return false;
+
+                  int dow = now.day_of_week;
+                  if (dow == 1) return id(p5_mon).state;
+                  if (dow == 2) return id(p5_tue).state;
+                  if (dow == 3) return id(p5_wed).state;
+                  if (dow == 4) return id(p5_thu).state;
+                  if (dow == 5) return id(p5_fri).state;
+                  if (dow == 6) return id(p5_sat).state;
+                  if (dow == 7) return id(p5_sun).state;
+                  return false;
               then:
                 - script.execute: script_p5
-          # Pompa 6
+
+          # --- POMPA 6 ---
           - if:
               condition:
                 lambda: |-
                   auto now = id(ds_time).now();
                   int h = (int)id(h_p6).state;
                   int m = (int)id(m_p6).state;
-                  return (now.hour == h && now.minute == m) && (h != 0 || m != 0);
+                  if (!((now.hour == h && now.minute == m) && (h != 0 || m != 0))) return false;
+
+                  int dow = now.day_of_week;
+                  if (dow == 1) return id(p6_mon).state;
+                  if (dow == 2) return id(p6_tue).state;
+                  if (dow == 3) return id(p6_wed).state;
+                  if (dow == 4) return id(p6_thu).state;
+                  if (dow == 5) return id(p6_fri).state;
+                  if (dow == 6) return id(p6_sat).state;
+                  if (dow == 7) return id(p6_sun).state;
+                  return false;
               then:
                 - script.execute: script_p6
 
@@ -144,10 +209,10 @@ time:
 
 sensor:
   
-  - platform: template
-    name: "Manualne pH"
-    id: ph_sensor_id
-    lambda: 'return 6.85;'
+  # - platform: template
+  #   name: "Manualne pH"
+  #   id: ph_sensor_id
+  #   lambda: 'return 6.85;'
   
   - platform: ads1115
     multiplexer: 'A0_GND'
@@ -328,7 +393,7 @@ display:
       
       // Linia 3: PH i Temperatura (rozdzielone, z dużą ilością miejsca)
       it.printf(0, 2, "PH:%4.2f  Temp:%4.1fC", 
-        id(ph_sensor_id).state, id(temp_akwarium).state);
+        id(ph_akwarium).state, id(temp_akwarium).state);
       
       // Linia 4: TDS i Info o zbiorniku
       it.printf(0, 3, "TDS:%3.0f ppm", id(tds_real).state);
@@ -811,6 +876,228 @@ number:
     unit_of_measurement: "%"
     mode: box
 
+switch:
+  # POMPA 1 - DNI TYGODNIA
+  - platform: template
+    name: "P1: Poniedziałek"
+    id: p1_mon
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+  - platform: template
+    name: "P1: Wtorek"
+    id: p1_tue
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+  - platform: template
+    name: "P1: Środa"
+    id: p1_wed
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+  - platform: template
+    name: "P1: Czwartek"
+    id: p1_thu
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+  - platform: template
+    name: "P1: Piątek"
+    id: p1_fri
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+  - platform: template
+    name: "P1: Sobota"
+    id: p1_sat
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+  - platform: template
+    name: "P1: Niedziela"
+    id: p1_sun
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+
+  # POMPA 2 - DNI TYGODNIA
+  - platform: template
+    name: "P2: Poniedziałek"
+    id: p2_mon
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+  - platform: template
+    name: "P2: Wtorek"
+    id: p2_tue
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+  - platform: template
+    name: "P2: Środa"
+    id: p2_wed
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+  - platform: template
+    name: "P2: Czwartek"
+    id: p2_thu
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+  - platform: template
+    name: "P2: Piątek"
+    id: p2_fri
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+  - platform: template
+    name: "P2: Sobota"
+    id: p2_sat
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+  - platform: template
+    name: "P2: Niedziela"
+    id: p2_sun
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+
+  # POMPA 3 - DNI TYGODNIA
+  - platform: template
+    name: "P3: Poniedziałek"
+    id: p3_mon
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+  - platform: template
+    name: "P3: Wtorek"
+    id: p3_tue
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+  - platform: template
+    name: "P3: Środa"
+    id: p3_wed
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+  - platform: template
+    name: "P3: Czwartek"
+    id: p3_thu
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+  - platform: template
+    name: "P3: Piątek"
+    id: p3_fri
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+  - platform: template
+    name: "P3: Sobota"
+    id: p3_sat
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+  - platform: template
+    name: "P3: Niedziela"
+    id: p3_sun
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+
+  # POMPA 4 - DNI TYGODNIA
+  - platform: template
+    name: "P4: Poniedziałek"
+    id: p4_mon
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+  - platform: template
+    name: "P4: Wtorek"
+    id: p4_tue
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+  - platform: template
+    name: "P4: Środa"
+    id: p4_wed
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+  - platform: template
+    name: "P4: Czwartek"
+    id: p4_thu
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+  - platform: template
+    name: "P4: Piątek"
+    id: p4_fri
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+  - platform: template
+    name: "P4: Sobota"
+    id: p4_sat
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+  - platform: template
+    name: "P4: Niedziela"
+    id: p4_sun
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+
+  # POMPA 5 - DNI TYGODNIA
+  - platform: template
+    name: "P5: Poniedziałek"
+    id: p5_mon
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+  - platform: template
+    name: "P5: Wtorek"
+    id: p5_tue
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+  - platform: template
+    name: "P5: Środa"
+    id: p5_wed
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+  - platform: template
+    name: "P5: Czwartek"
+    id: p5_thu
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+  - platform: template
+    name: "P5: Piątek"
+    id: p5_fri
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+  - platform: template
+    name: "P5: Sobota"
+    id: p5_sat
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+  - platform: template
+    name: "P5: Niedziela"
+    id: p5_sun
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+
+  # POMPA 6 - DNI TYGODNIA
+  - platform: template
+    name: "P6: Poniedziałek"
+    id: p6_mon
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+  - platform: template
+    name: "P6: Wtorek"
+    id: p6_tue
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+  - platform: template
+    name: "P6: Środa"
+    id: p6_wed
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+  - platform: template
+    name: "P6: Czwartek"
+    id: p6_thu
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+  - platform: template
+    name: "P6: Piątek"
+    id: p6_fri
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+  - platform: template
+    name: "P6: Sobota"
+    id: p6_sat
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+  - platform: template
+    name: "P6: Niedziela"
+    id: p6_sun
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
 
 # --- PRZYCISKI (Zaktualizowane o osobne REFILL) ---
 button:
