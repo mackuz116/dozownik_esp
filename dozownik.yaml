@@ -358,6 +358,87 @@ script:
           call.perform();
           global_preferences->sync();
 
+  - id: script_podmiana_uderzenie
+    mode: queued
+    then:
+      - logger.log: "INFO: Start bezpiecznej dawki po podmianie (P1-P6)..."
+      
+      # --- POMPA 1 ---
+      - if:
+          condition: { lambda: "return id(d1_sub).state > 0;" }
+          then:
+            - light.turn_on:
+                id: p1
+                brightness: !lambda "return id(p1_speed).state / 100.0;"
+            - delay: !lambda "return id(d1_sub).state * id(c1).state * 1000;"
+            - light.turn_off: p1
+            - lambda: "id(p1_level).publish_state(max(0.0f, id(p1_level).state - id(d1_sub).state));"
+            - delay: 1s
+
+      # --- POMPA 2 ---
+      - if:
+          condition: { lambda: "return id(d2_sub).state > 0;" }
+          then:
+            - light.turn_on:
+                id: p2
+                brightness: !lambda "return id(p2_speed).state / 100.0;"
+            - delay: !lambda "return id(d2_sub).state * id(c2).state * 1000;"
+            - light.turn_off: p2
+            - lambda: "id(p2_level).publish_state(max(0.0f, id(p2_level).state - id(d2_sub).state));"
+            - delay: 1s
+
+      # --- POMPA 3 ---
+      - if:
+          condition: { lambda: "return id(d3_sub).state > 0;" }
+          then:
+            - light.turn_on:
+                id: p3
+                brightness: !lambda "return id(p3_speed).state / 100.0;"
+            - delay: !lambda "return id(d3_sub).state * id(c3).state * 1000;"
+            - light.turn_off: p3
+            - lambda: "id(p3_level).publish_state(max(0.0f, id(p3_level).state - id(d3_sub).state));"
+            - delay: 1s
+
+      # --- POMPA 4 ---
+      - if:
+          condition: { lambda: "return id(d4_sub).state > 0;" }
+          then:
+            - light.turn_on:
+                id: p4
+                brightness: !lambda "return id(p4_speed).state / 100.0;"
+            - delay: !lambda "return id(d4_sub).state * id(c4).state * 1000;"
+            - light.turn_off: p4
+            - lambda: "id(p4_level).publish_state(max(0.0f, id(p4_level).state - id(d4_sub).state));"
+            - delay: 1s
+
+      # --- POMPA 5 ---
+      - if:
+          condition: { lambda: "return id(d5_sub).state > 0;" }
+          then:
+            - light.turn_on:
+                id: p5
+                brightness: !lambda "return id(p5_speed).state / 100.0;"
+            - delay: !lambda "return id(d5_sub).state * id(c5).state * 1000;"
+            - light.turn_off: p5
+            - lambda: "id(p5_level).publish_state(max(0.0f, id(p5_level).state - id(d5_sub).state));"
+            - delay: 1s
+
+      # --- POMPA 6 ---
+      - if:
+          condition: { lambda: "return id(d6_sub).state > 0;" }
+          then:
+            - light.turn_on:
+                id: p6
+                brightness: !lambda "return id(p6_speed).state / 100.0;"
+            - delay: !lambda "return id(d6_sub).state * id(c6).state * 1000;"
+            - light.turn_off: p6
+            - lambda: "id(p6_level).publish_state(max(0.0f, id(p6_level).state - id(d6_sub).state));"
+            - delay: 1s
+
+      - lambda: "global_preferences->sync();"
+      - logger.log: "INFO: Pełne nawożenie po podmianie zakończone sukcesem."
+
+
 
 display:
   - platform: lcd_pcf8574
@@ -876,6 +957,74 @@ number:
     unit_of_measurement: "%"
     mode: box
 
+# DAWKI UDERZENIOWE DLA WSZYSTKICH POMP (PO PODMIANIE)
+  - platform: template
+    name: "06. PODMIANA: P1 Mikro (ml)"
+    id: d1_sub
+    mode: BOX
+    min_value: 0
+    max_value: 100
+    step: 0.1
+    optimistic: true
+    restore_value: yes
+    initial_value: 5.0
+
+  - platform: template
+    name: "06. PODMIANA: P2 Azot (ml)"
+    id: d2_sub
+    mode: BOX
+    min_value: 0
+    max_value: 100
+    step: 0.1
+    optimistic: true
+    restore_value: yes
+    initial_value: 15.0
+
+  - platform: template
+    name: "06. PODMIANA: P3 Potas (ml)"
+    id: d3_sub
+    mode: BOX
+    min_value: 0
+    max_value: 100
+    step: 0.1
+    optimistic: true
+    restore_value: yes
+    initial_value: 10.0
+
+  - platform: template
+    name: "06. PODMIANA: P4 Carbo (ml)"
+    id: d4_sub
+    mode: BOX
+    min_value: 0
+    max_value: 100
+    step: 0.1
+    optimistic: true
+    restore_value: yes
+    initial_value: 3.0
+
+  - platform: template
+    name: "06. PODMIANA: P5 MgSO4 (ml)"
+    id: d5_sub
+    mode: BOX
+    min_value: 0
+    max_value: 100
+    step: 0.1
+    optimistic: true
+    restore_value: yes
+    initial_value: 0.0
+
+  - platform: template
+    name: "06. PODMIANA: P6 MAKRO (ml)"
+    id: d6_sub
+    mode: BOX
+    min_value: 0
+    max_value: 100
+    step: 0.1
+    optimistic: true
+    restore_value: yes
+    initial_value: 0.0
+
+
 switch:
   # POMPA 1 - DNI TYGODNIA
   - platform: template
@@ -1172,25 +1321,11 @@ button:
           id(p6_level).publish_state(1000.0);
           global_preferences->sync(); // <--- Zapisuje wszystkie 6 butelek jednym ruchem
 
-  # Sekcja C - Testy czasowe
-  # - platform: template
-  #   name: "C. TEST 10s: P1"
-  #   on_press: [switch.turn_on: p1, delay: 10s, switch.turn_off: p1]
-  # - platform: template
-  #   name: "C. TEST 10s: P2"
-  #   on_press: [switch.turn_on: p2, delay: 10s, switch.turn_off: p2]
-  # - platform: template
-  #   name: "C. TEST 10s: P3"
-  #   on_press: [switch.turn_on: p3, delay: 10s, switch.turn_off: p3]
-  # - platform: template
-  #   name: "C. TEST 10s: P4"
-  #   on_press: [switch.turn_on: p4, delay: 10s, switch.turn_off: p4]
-  # - platform: template
-  #   name: "C. TEST 10s: P5"
-  #   on_press: [switch.turn_on: p5, delay: 10s, switch.turn_off: p5]
-  # - platform: template
-  #   name: "C. TEST 10s: P6"
-  #   on_press: [switch.turn_on: p6, delay: 10s, switch.turn_off: p6]
+  - platform: template
+    name: "D. PODMIANA: Uruchom wyrównanie P1-P6"
+    icon: "mdi:water-boiler-auto"
+    on_press:
+      - script.execute: script_podmiana_uderzenie
 
   - platform: template
     name: "C. TEST 10s: P1"

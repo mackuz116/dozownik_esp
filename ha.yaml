@@ -85,994 +85,577 @@ views:
           # Witaj {{ user }} 
            Dodaj tutaj swój tekst, zmienne szablonu są obsługiwane ✨
   - type: sections
+    path: test
     max_columns: 4
-    title: 'Pompa dozująca '
-    path: pompa-dozujaca
-    icon: mdi:water-pump
+    title: test
     sections:
-      - type: grid
+      - type: custom:grid-layout
+        layout:
+          grid-template-columns: repeat(auto-fit, minmax(320px, 1fr))
+          grid-gap: 15px
+          mediaquery:
+            '(max-width: 500px)':
+              grid-template-columns: 1fr
+            '(max-width: 1000px)':
+              grid-template-columns: 1fr 1fr
+            '(min-width: 1001px)':
+              grid-template-columns: 1fr 1fr 1fr
         cards:
-          - square: true
-            type: grid
+          - type: vertical-stack
             cards:
+              - type: markdown
+                content: >-
+                  ### MIKRO ({{ states('number.dozownik_nawozow_04_dawka_p1_ml')
+                  }} ml)
+              - type: gauge
+                entity: number.dozownik_nawozow_02_butelka_p1_ml
+                name: 'P1: Mikro'
+                min: 0
+                max: 1000
+                needle: true
+                severity:
+                  green: 400
+                  yellow: 150
+                  red: 0
               - type: entities
                 entities:
-                  - entity: sensor.dozownik_nawozow_02_poziom_mikro_p1
-                    name: Poziom
-                    icon: mdi:glass-stange
-                    secondary_info: none
-                  - entity: number.dozownik_nawozow_02_butelka_p1_ml
-                    name: Pojemność
-                    icon: mdi:bottle-wine
-                  - entity: number.dozownik_nawozow_03_kalib_p1_s_ml
-                    name: Kalibracja
-                    icon: mdi:align-vertical-bottom
-                  - entity: number.dozownik_nawozow_04_dawka_p1_ml
-                    name: Dawka
-                    icon: mdi:water-pump
-                  - entity: number.dozownik_nawozow_05_czas_p1_h
-                    name: 'Godzina '
-                    icon: mdi:clock
-                  - entity: number.dozownik_nawozow_05_czas_p1_min
-                    name: Minuta
-                    icon: mdi:clock-check-outline
-                  - entity: number.dozownik_nawozow_p1_predkosc
-                    name: Prędkość
-                    icon: mdi:speedometer
-                  - entity: button.dozownik_nawozow_a_dozuj_p1
-                    name: DOZOWANIE
-                    icon: mdi:water-pump
-                  - entity: button.dozownik_nawozow_b_refill_p1_1000ml
-                    name: Uzupełnienie
-                    icon: mdi:bottle-tonic-plus
-                  - entity: button.dozownik_nawozow_c_test_10s_p1
-                    name: TEST 10S
-                    icon: mdi:history
-                  - entity: switch.dozownik_nawozow_p1_poniedzialek
-                    name: Poniedziałek
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p1_wtorek
-                    name: Wtorek
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p1_sroda
-                    name: Środa
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p1_czwartek
-                    name: Czwartek
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p1_piatek
-                    name: Piątek
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p1_sobota
-                    name: Sobota
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p1_niedziela
-                    name: Niedziela
-                    icon: mdi:calendar
-                title: Pompa P1 MIKRO
-                show_header_toggle: false
-                state_color: false
-              - type: entities
-                entities:
-                  - entity: sensor.dozownik_nawozow_02_poziom_kno3_p2
-                    name: Poziom
-                    icon: mdi:glass-stange
-                    secondary_info: none
-                  - entity: number.dozownik_nawozow_02_butelka_p2_ml
-                    name: Pojemność
-                    icon: mdi:bottle-wine
-                  - entity: number.dozownik_nawozow_03_kalib_p2_s_ml
-                    name: Kalibracja
-                    icon: mdi:align-vertical-bottom
-                  - entity: number.dozownik_nawozow_04_dawka_p2_ml
-                    name: Dawka
-                    icon: mdi:water-pump
-                  - entity: number.dozownik_nawozow_05_czas_p2_h
-                    name: 'Godzina '
-                    icon: mdi:clock
-                  - entity: number.dozownik_nawozow_05_czas_p2_min
-                    name: Minuta
-                    icon: mdi:clock-check-outline
-                  - entity: number.dozownik_nawozow_p2_predkosc
-                    name: Prędkość
-                    icon: mdi:speedometer
-                  - entity: button.dozownik_nawozow_a_dozuj_p2
-                    name: DOZOWANIE
-                    icon: mdi:water-pump
-                  - entity: button.dozownik_nawozow_b_refill_p2_1000ml
-                    name: Uzupełnienie
-                    icon: mdi:bottle-tonic-plus
-                  - entity: button.dozownik_nawozow_c_test_10s_p2
-                    name: TEST 10S
-                    icon: mdi:history
-                  - entity: switch.dozownik_nawozow_p2_poniedzialek
-                    name: Poniedziałek
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p2_wtorek
-                    name: Wtorek
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p2_sroda
-                    name: Środa
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p2_czwartek
-                    name: Czwartek
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p2_piatek
-                    name: Piątek
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p2_sobota
-                    name: Sobota
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p2_niedziela
-                    name: Niedziela
-                    icon: mdi:calendar
-                title: Pompa P2 KNO3
-                show_header_toggle: false
-                state_color: false
-              - type: entities
-                entities:
-                  - entity: sensor.dozownik_nawozow_02_poziom_k2so4_p3
-                    name: Poziom
-                    icon: mdi:glass-stange
-                    secondary_info: none
-                  - entity: number.dozownik_nawozow_02_butelka_p3_ml
-                    name: Pojemność
-                    icon: mdi:bottle-wine
-                  - entity: number.dozownik_nawozow_03_kalib_p3_s_ml
-                    name: Kalibracja
-                    icon: mdi:align-vertical-bottom
-                  - entity: number.dozownik_nawozow_04_dawka_p3_ml
-                    name: Dawka
-                    icon: mdi:water-pump
-                  - entity: number.dozownik_nawozow_05_czas_p3_h
-                    name: 'Godzina '
-                    icon: mdi:clock
-                  - entity: number.dozownik_nawozow_05_czas_p3_min
-                    name: Minuta
-                    icon: mdi:clock-check-outline
-                  - entity: number.dozownik_nawozow_p3_predkosc
-                    name: Prędkość
-                    icon: mdi:speedometer
-                  - entity: button.dozownik_nawozow_a_dozuj_p3
-                    name: DOZOWANIE
-                    icon: mdi:water-pump
-                  - entity: button.dozownik_nawozow_b_refill_p3_1000ml
-                    name: Uzupełnienie
-                    icon: mdi:bottle-tonic-plus
-                  - entity: button.dozownik_nawozow_c_test_10s_p3
-                    name: TEST 10S
-                    icon: mdi:history
-                  - entity: switch.dozownik_nawozow_p3_poniedzialek
-                    name: Poniedziałek
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p3_wtorek
-                    name: Wtorek
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p3_sroda
-                    name: Środa
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p3_czwartek
-                    name: Czwartek
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p3_piatek
-                    name: Piątek
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p3_sobota
-                    name: Sobota
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p3_niedziela
-                    name: Niedziela
-                    icon: mdi:calendar
-                title: Pompa P3 K2SO4
-                show_header_toggle: false
-                state_color: false
-            title: Pompy
-            grid_options:
-              rows: auto
-            columns: 1
-          - square: true
-            type: grid
+                  - type: custom:fold-entity-row
+                    head:
+                      type: section
+                      label: Parametry P1
+                    open: false
+                    entities:
+                      - entity: number.dozownik_nawozow_04_dawka_p1_ml
+                        name: Dawka (ml)
+                        icon: mdi:water
+                      - entity: number.dozownik_nawozow_02_butelka_p1_ml
+                        name: Pojemność
+                        icon: mdi:bottle-wine
+                      - entity: number.dozownik_nawozow_03_kalib_p1_s_ml
+                        name: Kalibracja (10s)
+                        icon: mdi:align-vertical-bottom
+                      - entity: number.dozownik_nawozow_05_czas_p1_h
+                        name: Godzina
+                        icon: mdi:clock-edit-outline
+                      - entity: number.dozownik_nawozow_05_czas_p1_min
+                        name: Minuta
+                        icon: mdi:clock-edit-outline
+                      - entity: number.dozownik_nawozow_p1_predkosc
+                        name: Prędkość
+                        icon: mdi:speedometer
+                      - entity: switch.dozownik_nawozow_p1_poniedzialek
+                        name: Poniedziałek
+                      - entity: switch.dozownik_nawozow_p1_wtorek
+                        name: Wtorek
+                      - entity: switch.dozownik_nawozow_p1_sroda
+                        name: Środe
+                      - entity: switch.dozownik_nawozow_p1_czwartek
+                        name: Czwartek
+                      - entity: switch.dozownik_nawozow_p1_piatek
+                        name: Piątek
+                      - entity: switch.dozownik_nawozow_p1_sobota
+                        name: Sobota
+                      - entity: switch.dozownik_nawozow_p1_niedziela
+                        name: Niedziela
+                  - type: custom:fold-entity-row
+                    head:
+                      type: section
+                      label: ⚠️ SZYBKIE AKCJE P1
+                    open: false
+                    entities:
+                      - type: custom:hui-element
+                        card_type: grid
+                        columns: 1
+                        square: false
+                        cards:
+                          - type: button
+                            entity: button.dozownik_nawozow_a_dozuj_p1
+                            name: DOZUJ
+                            icon_height: 25px
+                          - type: button
+                            entity: button.dozownik_nawozow_b_refill_p1_1000ml
+                            name: UZUPEŁNIJ
+                            icon_height: 25px
+                          - type: button
+                            entity: button.dozownik_nawozow_c_test_10s_p1
+                            name: TEST 10S
+                            icon_height: 25px
+          - type: vertical-stack
             cards:
+              - type: markdown
+                content: >-
+                  ### KNO3 ({{ states('number.dozownik_nawozow_04_dawka_p2_ml')
+                  }} ml)
+              - type: gauge
+                entity: number.dozownik_nawozow_02_butelka_p2_ml
+                name: 'P2: KNO3'
+                min: 0
+                max: 1000
+                needle: true
+                severity:
+                  green: 400
+                  yellow: 150
+                  red: 0
               - type: entities
                 entities:
-                  - entity: sensor.dozownik_nawozow_02_poziom_carbo_p4
-                    name: Poziom
-                    icon: mdi:glass-stange
-                    secondary_info: none
-                  - entity: number.dozownik_nawozow_02_butelka_p4_ml
-                    name: Pojemność
-                    icon: mdi:bottle-wine
-                  - entity: number.dozownik_nawozow_03_kalib_p4_s_ml
-                    name: Kalibracja
-                    icon: mdi:align-vertical-bottom
-                  - entity: number.dozownik_nawozow_04_dawka_p4_ml
-                    name: Dawka
-                    icon: mdi:water-pump
-                  - entity: number.dozownik_nawozow_05_czas_p4_h
-                    name: 'Godzina '
-                    icon: mdi:clock
-                  - entity: number.dozownik_nawozow_05_czas_p4_min
-                    name: Minuta
-                    icon: mdi:clock-check-outline
-                  - entity: number.dozownik_nawozow_p4_predkosc
-                    name: Prędkość
-                    icon: mdi:speedometer
-                  - entity: button.dozownik_nawozow_a_dozuj_p4
-                    name: DOZOWANIE
-                    icon: mdi:water-pump
-                  - entity: button.dozownik_nawozow_b_refill_p4_1000ml
-                    name: Uzupełnienie
-                    icon: mdi:bottle-tonic-plus
-                  - entity: button.dozownik_nawozow_c_test_10s_p4
-                    name: TEST 10S
-                    icon: mdi:history
-                  - entity: switch.dozownik_nawozow_p4_poniedzialek
-                    name: Poniedziałek
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p4_wtorek
-                    name: Wtorek
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p4_sroda
-                    name: Środa
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p4_czwartek
-                    name: Czwartek
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p4_piatek
-                    name: Piątek
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p4_sobota
-                    name: Sobota
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p4_niedziela
-                    name: Niedziela
-                    icon: mdi:calendar
-                title: Pompa P4 CARBO
-                show_header_toggle: false
-                state_color: false
+                  - type: custom:fold-entity-row
+                    head:
+                      type: section
+                      label: Parametry P2
+                    open: false
+                    entities:
+                      - entity: number.dozownik_nawozow_04_dawka_p2_ml
+                        name: Dawka (ml)
+                        icon: mdi:water
+                      - entity: number.dozownik_nawozow_02_butelka_p2_ml
+                        name: Pojemność
+                        icon: mdi:bottle-wine
+                      - entity: number.dozownik_nawozow_03_kalib_p2_s_ml
+                        name: Kalibracja (10s)
+                        icon: mdi:align-vertical-bottom
+                      - entity: number.dozownik_nawozow_05_czas_p2_h
+                        name: Godzina
+                        icon: mdi:clock-edit-outline
+                      - entity: number.dozownik_nawozow_05_czas_p2_min
+                        name: Minuta
+                        icon: mdi:clock-edit-outline
+                      - entity: number.dozownik_nawozow_p2_predkosc
+                        name: Prędkość
+                        icon: mdi:speedometer
+                      - entity: switch.dozownik_nawozow_p2_poniedzialek
+                        name: Poniedziałek
+                      - entity: switch.dozownik_nawozow_p2_wtorek
+                        name: Wtorek
+                      - entity: switch.dozownik_nawozow_p2_sroda
+                        name: Środe
+                      - entity: switch.dozownik_nawozow_p2_czwartek
+                        name: Czwartek
+                      - entity: switch.dozownik_nawozow_p2_piatek
+                        name: Piątek
+                      - entity: switch.dozownik_nawozow_p2_sobota
+                        name: Sobota
+                      - entity: switch.dozownik_nawozow_p2_niedziela
+                        name: Niedziela
+                  - type: custom:fold-entity-row
+                    head:
+                      type: section
+                      label: ⚠️ SZYBKIE AKCJE P2
+                    open: false
+                    entities:
+                      - type: custom:hui-element
+                        card_type: grid
+                        columns: 1
+                        square: false
+                        cards:
+                          - type: button
+                            entity: button.dozownik_nawozow_a_dozuj_p2
+                            name: DOZUJ
+                            icon_height: 25px
+                          - type: button
+                            entity: button.dozownik_nawozow_b_refill_p2_1000ml
+                            name: UZUPEŁNIJ
+                            icon_height: 25px
+                          - type: button
+                            entity: button.dozownik_nawozow_c_test_10s_p2
+                            name: TEST 10S
+                            icon_height: 25px
+          - type: vertical-stack
+            cards:
+              - type: markdown
+                content: >-
+                  ### K2SO4 ({{ states('number.dozownik_nawozow_04_dawka_p3_ml')
+                  }} ml)
+              - type: gauge
+                entity: number.dozownik_nawozow_02_butelka_p3_ml
+                name: 'P3: K2SO4'
+                min: 0
+                max: 1000
+                needle: true
+                severity:
+                  green: 400
+                  yellow: 150
+                  red: 0
               - type: entities
                 entities:
-                  - entity: sensor.dozownik_nawozow_02_poziom_mgso4_p5
-                    name: Poziom
-                    icon: mdi:glass-stange
-                    secondary_info: none
-                  - entity: number.dozownik_nawozow_02_butelka_p5_ml
-                    name: Pojemność
-                    icon: mdi:bottle-wine
-                  - entity: number.dozownik_nawozow_03_kalib_p5_s_ml
-                    name: Kalibracja
-                    icon: mdi:align-vertical-bottom
-                  - entity: number.dozownik_nawozow_04_dawka_p5_ml
-                    name: Dawka
-                    icon: mdi:water-pump
-                  - entity: number.dozownik_nawozow_05_czas_p5_h
-                    name: 'Godzina '
-                    icon: mdi:clock
-                  - entity: number.dozownik_nawozow_05_czas_p5_min
-                    name: Minuta
-                    icon: mdi:clock-check-outline
-                  - entity: number.dozownik_nawozow_p5_predkosc
-                    name: Prędkość
-                    icon: mdi:speedometer
-                  - entity: button.dozownik_nawozow_a_dozuj_p5
-                    name: DOZOWANIE
-                    icon: mdi:water-pump
-                  - entity: button.dozownik_nawozow_b_refill_p5_1000ml
-                    name: Uzupełnienie
-                    icon: mdi:bottle-tonic-plus
-                  - entity: button.dozownik_nawozow_c_test_10s_p5
-                    name: TEST 10S
-                    icon: mdi:history
-                  - entity: switch.dozownik_nawozow_p5_poniedzialek
-                    name: Poniedziałek
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p5_wtorek
-                    name: Wtorek
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p5_sroda
-                    name: Środa
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p5_czwartek
-                    name: Czwartek
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p5_piatek
-                    name: Piątek
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p5_sobota
-                    name: Sobota
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p5_niedziela
-                    name: Niedziela
-                    icon: mdi:calendar
-                title: Pompa P5 MgSO4
-                show_header_toggle: false
-                state_color: false
+                  - type: custom:fold-entity-row
+                    head:
+                      type: section
+                      label: Parametry P3
+                    open: false
+                    entities:
+                      - entity: number.dozownik_nawozow_04_dawka_p3_ml
+                        name: Dawka (ml)
+                        icon: mdi:water
+                      - entity: number.dozownik_nawozow_02_butelka_p3_ml
+                        name: Pojemność
+                        icon: mdi:bottle-wine
+                      - entity: number.dozownik_nawozow_03_kalib_p3_s_ml
+                        name: Kalibracja (10s)
+                        icon: mdi:align-vertical-bottom
+                      - entity: number.dozownik_nawozow_05_czas_p3_h
+                        name: Godzina
+                        icon: mdi:clock-edit-outline
+                      - entity: number.dozownik_nawozow_05_czas_p3_min
+                        name: Minuta
+                        icon: mdi:clock-edit-outline
+                      - entity: number.dozownik_nawozow_p3_predkosc
+                        name: Prędkość
+                        icon: mdi:speedometer
+                      - entity: switch.dozownik_nawozow_p3_poniedzialek
+                        name: Poniedziałek
+                      - entity: switch.dozownik_nawozow_p3_wtorek
+                        name: Wtorek
+                      - entity: switch.dozownik_nawozow_p3_sroda
+                        name: Środe
+                      - entity: switch.dozownik_nawozow_p3_czwartek
+                        name: Czwartek
+                      - entity: switch.dozownik_nawozow_p3_piatek
+                        name: Piątek
+                      - entity: switch.dozownik_nawozow_p3_sobota
+                        name: Sobota
+                      - entity: switch.dozownik_nawozow_p3_niedziela
+                        name: Niedziela
+                  - type: custom:fold-entity-row
+                    head:
+                      type: section
+                      label: ⚠️ SZYBKIE AKCJE P3
+                    open: false
+                    entities:
+                      - type: custom:hui-element
+                        card_type: grid
+                        columns: 1
+                        square: false
+                        cards:
+                          - type: button
+                            entity: button.dozownik_nawozow_a_dozuj_p3
+                            name: DOZUJ
+                            icon_height: 25px
+                          - type: button
+                            entity: button.dozownik_nawozow_b_refill_p3_1000ml
+                            name: UZUPEŁNIJ
+                            icon_height: 25px
+                          - type: button
+                            entity: button.dozownik_nawozow_c_test_10s_p3
+                            name: TEST 10S
+                            icon_height: 25px
+          - type: vertical-stack
+            cards:
+              - type: markdown
+                content: >-
+                  ### CARBO ({{ states('number.dozownik_nawozow_04_dawka_p4_ml')
+                  }} ml)
+              - type: gauge
+                entity: number.dozownik_nawozow_02_butelka_p4_ml
+                name: P4 Carbo
+                min: 0
+                max: 1000
+                needle: true
+                severity:
+                  green: 400
+                  yellow: 150
+                  red: 0
               - type: entities
                 entities:
-                  - entity: sensor.dozownik_nawozow_02_poziom_makro_p6
-                    name: Poziom
-                    icon: mdi:glass-stange
-                    secondary_info: none
-                  - entity: number.dozownik_nawozow_02_butelka_p6_ml
-                    name: Pojemność
-                    icon: mdi:bottle-wine
-                  - entity: number.dozownik_nawozow_03_kalib_p6_s_ml
-                    name: Kalibracja
-                    icon: mdi:align-vertical-bottom
-                  - entity: number.dozownik_nawozow_04_dawka_p6_ml
-                    name: Dawka
-                    icon: mdi:water-pump
-                  - entity: number.dozownik_nawozow_05_czas_p6_h
-                    name: 'Godzina '
-                    icon: mdi:clock
-                  - entity: number.dozownik_nawozow_05_czas_p6_min
-                    name: Minuta
-                    icon: mdi:clock-check-outline
-                  - entity: number.dozownik_nawozow_p6_predkosc
-                    name: Prędkość
-                    icon: mdi:speedometer
-                  - entity: button.dozownik_nawozow_a_dozuj_p6
-                    name: DOZOWANIE
-                    icon: mdi:water-pump
-                  - entity: button.dozownik_nawozow_b_refill_p6_1000ml
-                    name: Uzupełnienie
-                    icon: mdi:bottle-tonic-plus
-                  - entity: button.dozownik_nawozow_c_test_10s_p6
-                    name: TEST 10S
-                    icon: mdi:history
-                  - entity: switch.dozownik_nawozow_p6_poniedzialek
-                    name: Poniedziałek
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p6_wtorek
-                    name: Wtorek
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p6_sroda
-                    name: Środa
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p6_czwartek
-                    name: Czwartek
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p6_piatek
-                    name: Piątek
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p6_sobota
-                    name: Sobota
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p6_niedziela
-                    name: Niedziela
-                    icon: mdi:calendar
-                title: Pompa P6 MAKRO
-                show_header_toggle: false
-                state_color: false
-            title: Pompy
-            grid_options:
-              rows: auto
-            columns: 1
-          - type: markdown
-            content: >-
-              ### 📊 System Nawożenia 300L
-
-              | Nawóz | Dawka | Tygodniowo | Cel (ppm) |
-
-              | :--- | :---: | :---: | :---: |
-
-              | **P2: Azot (KNO3)** | {{
-              states('number.dozownik_nawozow_04_dawka_p2_ml') | float(0) }} ml
-              | {{ (states('number.dozownik_nawozow_04_dawka_p2_ml') | float(0)
-              * 0.16 * 7) | round(1) }} ppm | 10-20 |
-
-              | **P3: Potas (K2SO4)** | {{
-              states('number.dozownik_nawozow_04_dawka_p3_ml') | float(0) }} ml
-              | {{ (states('number.dozownik_nawozow_04_dawka_p3_ml') | float(0)
-              * 0.15 * 7) | round(1) }} ppm | 15-25* |
-
-              | **Suma Potasu (K)** | -- | {{
-              ((states('number.dozownik_nawozow_04_dawka_p2_ml') | float(0) *
-              0.10 + states('number.dozownik_nawozow_04_dawka_p3_ml') | float(0)
-              * 0.15) * 7) | round(1) }} ppm | 15-25 |
-
-
-              > [!INFO]
-
-              > *Potas (K) jest dostarczany z obu butelek. Tabela automatycznie
-              sumuje stężenie.*
-
-
-              **Status:** {% if
-              (states('number.dozownik_nawozow_04_dawka_p2_ml') | float(0)) > 0
-              %} ✅ Dozowanie Aktywne {% else %} ⚠️ System Wstrzymany {% endif %}
-
-
-              ---
-
-              #### 🧪 Receptura (na 1000ml RO):
-
-              * **P2 (KNO3):** 80g soli + 0.4g E202 + 0.2g E300
-
-              * **P3 (K2SO4):** 100g soli + 0.4g E202 + 0.2g E300
-
-              * **Konserwanty:** Chronią przed pleśnią i bakteriami.
+                  - type: custom:fold-entity-row
+                    head:
+                      type: section
+                      label: Parametry P4
+                    open: false
+                    entities:
+                      - entity: number.dozownik_nawozow_04_dawka_p4_ml
+                        name: Dawka (ml)
+                        icon: mdi:water
+                      - entity: number.dozownik_nawozow_02_butelka_p4_ml
+                        name: Pojemność
+                        icon: mdi:bottle-wine
+                      - entity: number.dozownik_nawozow_03_kalib_p4_s_ml
+                        name: Kalibracja (10s)
+                        icon: mdi:align-vertical-bottom
+                      - entity: number.dozownik_nawozow_05_czas_p4_h
+                        name: Godzina
+                        icon: mdi:clock-edit-outline
+                      - entity: number.dozownik_nawozow_05_czas_p4_min
+                        name: Minuta
+                        icon: mdi:clock-edit-outline
+                      - entity: number.dozownik_nawozow_p4_predkosc
+                        name: Prędkość
+                        icon: mdi:speedometer
+                      - entity: switch.dozownik_nawozow_p4_poniedzialek
+                        name: Poniedziałek
+                      - entity: switch.dozownik_nawozow_p4_wtorek
+                        name: Wtorek
+                      - entity: switch.dozownik_nawozow_p4_sroda
+                        name: Środe
+                      - entity: switch.dozownik_nawozow_p4_czwartek
+                        name: Czwartek
+                      - entity: switch.dozownik_nawozow_p4_piatek
+                        name: Piątek
+                      - entity: switch.dozownik_nawozow_p4_sobota
+                        name: Sobota
+                      - entity: switch.dozownik_nawozow_p4_niedziela
+                        name: Niedziela
+                  - type: custom:fold-entity-row
+                    head:
+                      type: section
+                      label: ⚠️ SZYBKIE AKCJE P4
+                    open: false
+                    entities:
+                      - type: custom:hui-element
+                        card_type: grid
+                        columns: 1
+                        square: false
+                        cards:
+                          - type: button
+                            entity: button.dozownik_nawozow_a_dozuj_p4
+                            name: DOZUJ
+                            icon_height: 25px
+                          - type: button
+                            entity: button.dozownik_nawozow_b_refill_p4_1000ml
+                            name: UZUPEŁNIJ
+                            icon_height: 25px
+                          - type: button
+                            entity: button.dozownik_nawozow_c_test_10s_p4
+                            name: TEST 10S
+                            icon_height: 25px
+          - type: vertical-stack
+            cards:
+              - type: markdown
+                content: >-
+                  ### MgSO4 ({{ states('number.dozownik_nawozow_04_dawka_p5_ml')
+                  }} ml)
+              - type: gauge
+                entity: number.dozownik_nawozow_02_butelka_p5_ml
+                name: 'P5: MgSO4'
+                min: 0
+                max: 1000
+                needle: true
+                severity:
+                  green: 400
+                  yellow: 150
+                  red: 0
+              - type: entities
+                entities:
+                  - type: custom:fold-entity-row
+                    head:
+                      type: section
+                      label: Parametry P5
+                    open: false
+                    entities:
+                      - entity: number.dozownik_nawozow_04_dawka_p5_ml
+                        name: Dawka (ml)
+                        icon: mdi:water
+                      - entity: number.dozownik_nawozow_02_butelka_p5_ml
+                        name: Pojemność
+                        icon: mdi:bottle-wine
+                      - entity: number.dozownik_nawozow_03_kalib_p5_s_ml
+                        name: Kalibracja (10s)
+                        icon: mdi:align-vertical-bottom
+                      - entity: number.dozownik_nawozow_05_czas_p5_h
+                        name: Godzina
+                        icon: mdi:clock-edit-outline
+                      - entity: number.dozownik_nawozow_05_czas_p5_min
+                        name: Minuta
+                        icon: mdi:clock-edit-outline
+                      - entity: number.dozownik_nawozow_p5_predkosc
+                        name: Prędkość
+                        icon: mdi:speedometer
+                      - entity: switch.dozownik_nawozow_p5_poniedzialek
+                        name: Poniedziałek
+                      - entity: switch.dozownik_nawozow_p5_wtorek
+                        name: Wtorek
+                      - entity: switch.dozownik_nawozow_p5_sroda
+                        name: Środe
+                      - entity: switch.dozownik_nawozow_p5_czwartek
+                        name: Czwartek
+                      - entity: switch.dozownik_nawozow_p5_piatek
+                        name: Piątek
+                      - entity: switch.dozownik_nawozow_p5_sobota
+                        name: Sobota
+                      - entity: switch.dozownik_nawozow_p5_niedziela
+                        name: Niedziela
+                  - type: custom:fold-entity-row
+                    head:
+                      type: section
+                      label: ⚠️ SZYBKIE AKCJE P5
+                    open: false
+                    entities:
+                      - type: custom:hui-element
+                        card_type: grid
+                        columns: 1
+                        square: false
+                        cards:
+                          - type: button
+                            entity: button.dozownik_nawozow_a_dozuj_p5
+                            name: DOZUJ
+                            icon_height: 25px
+                          - type: button
+                            entity: button.dozownik_nawozow_b_refill_p5_1000ml
+                            name: UZUPEŁNIJ
+                            icon_height: 25px
+                          - type: button
+                            entity: button.dozownik_nawozow_c_test_10s_p5
+                            name: TEST 10S
+                            icon_height: 25px
+          - type: vertical-stack
+            cards:
+              - type: markdown
+                content: >-
+                  ### MAKRO ({{ states('number.dozownik_nawozow_04_dawka_p6_ml')
+                  }} ml)
+              - type: gauge
+                entity: number.dozownik_nawozow_02_butelka_p6_ml
+                name: 'P6: Makro'
+                min: 0
+                max: 1000
+                needle: true
+                severity:
+                  green: 400
+                  yellow: 150
+                  red: 0
+              - type: entities
+                entities:
+                  - type: custom:fold-entity-row
+                    head:
+                      type: section
+                      label: Parametry P6
+                    open: false
+                    entities:
+                      - entity: number.dozownik_nawozow_04_dawka_p6_ml
+                        name: Dawka (ml)
+                        icon: mdi:water
+                      - entity: number.dozownik_nawozow_02_butelka_p6_ml
+                        name: Pojemność
+                        icon: mdi:bottle-wine
+                      - entity: number.dozownik_nawozow_03_kalib_p6_s_ml
+                        name: Kalibracja (10s)
+                        icon: mdi:align-vertical-bottom
+                      - entity: number.dozownik_nawozow_05_czas_p6_h
+                        name: Godzina
+                        icon: mdi:clock-edit-outline
+                      - entity: number.dozownik_nawozow_05_czas_p6_min
+                        name: Minuta
+                        icon: mdi:clock-edit-outline
+                      - entity: number.dozownik_nawozow_p6_predkosc
+                        name: Prędkość
+                        icon: mdi:speedometer
+                      - entity: switch.dozownik_nawozow_p6_poniedzialek
+                        name: Poniedziałek
+                      - entity: switch.dozownik_nawozow_p6_wtorek
+                        name: Wtorek
+                      - entity: switch.dozownik_nawozow_p6_sroda
+                        name: Środe
+                      - entity: switch.dozownik_nawozow_p6_czwartek
+                        name: Czwartek
+                      - entity: switch.dozownik_nawozow_p6_piatek
+                        name: Piątek
+                      - entity: switch.dozownik_nawozow_p6_sobota
+                        name: Sobota
+                      - entity: switch.dozownik_nawozow_p6_niedziela
+                        name: Niedziela
+                  - type: custom:fold-entity-row
+                    head:
+                      type: section
+                      label: ⚠️ SZYBKIE AKCJE P6
+                    open: false
+                    entities:
+                      - type: custom:hui-element
+                        card_type: grid
+                        columns: 1
+                        square: false
+                        cards:
+                          - type: button
+                            entity: button.dozownik_nawozow_a_dozuj_p6
+                            name: DOZUJ
+                            icon_height: 25px
+                          - type: button
+                            entity: button.dozownik_nawozow_b_refill_p6_1000ml
+                            name: UZUPEŁNIJ
+                            icon_height: 25px
+                          - type: button
+                            entity: button.dozownik_nawozow_c_test_10s_p6
+                            name: TEST 10S
+                            icon_height: 25px
         column_span: 4
-    background:
-      opacity: 33
-      alignment: center
-      size: cover
-      repeat: repeat
-      attachment: fixed
-      image: /api/image/serve/d4586e8ec852a2c33ce61fa8d0dbdefb/original
-    cards: []
-    header:
-      card:
-        type: markdown
-        text_only: true
-        content: '# Akwarium  '
-      layout: responsive
-      badges_position: bottom
-      badges_wrap: wrap
-    badges:
-      - type: entity
-        show_name: false
-        show_state: true
-        show_icon: true
-        entity: sensor.dozownik_nawozow_00_czas_zegar_rtc
-        icon: mdi:clock-time-five-outline
-        show_entity_picture: false
-        name: RTC
-      - type: entity
-        show_name: false
-        show_state: true
-        show_icon: true
-        entity: sensor.dozownik_nawozow_temperatura_akwarium
-      - type: entity
-        show_name: false
-        show_state: true
-        show_icon: true
-        entity: sensor.dozownik_nawozow_tds_akwarium
-  - type: sections
-    max_columns: 4
-    title: ssss
-    path: ssss
-    sections:
-      - type: gridviews:
-  - title: Home
-    sections:
       - type: grid
-        cards:
-          - type: heading
-            heading: Dozownik Nawozów
-            heading_style: title
-            badges:
-              - type: entity
-                entity: sensor.dozownik_nawozow_00_czas_zegar_rtc
-          - type: entity
-            entity: sensor.dozownik_nawozow_temperatura_akwarium
-          - type: entity
-            entity: sensor.dozownik_nawozow_tds_akwarium
-      - type: grid
-        cards:
-          - type: heading
-            heading: PRALKA
-            heading_style: title
-          - type: entity
-            entity: update.haier_hon_update
-          - type: entity
-            entity: sensor.wash_dryer_program_phase
-          - type: entities
-            entities:
-              - entity: sensor.wash_dryer_total_electricity_used
-              - entity: sensor.wash_dryer_total_water_used
-              - entity: sensor.wash_dryer_total_wash_cycle
-              - entity: sensor.wash_dryer_end_time
-            state_color: true
-      - type: grid
-        cards:
-          - type: heading
-            heading_style: title
-            heading: Akwarium
-          - type: entities
-            entities:
-              - entity: sensor.co2_i_lampa_moc
-              - entity: sensor.co2_i_lampa_total_energy
-              - entity: switch.co2_i_lampa_socket_2
-                secondary_info: state
-            title: Lampa
-          - type: entities
-            entities:
-              - entity: switch.falownik_switch_1
-                name: Falownik
-                secondary_info: state
-              - entity: switch.skimer_switch_1
-                name: Falownik
-                secondary_info: state
-            title: Falowniki
-          - type: entities
-            entities:
-              - entity: switch.filtr_i_grzalka_socket_1
-                name: Filtr
-                secondary_info: state
-              - entity: sensor.filtr_i_grzalka_total_energy
-              - entity: sensor.filtr_i_grzalka_moc
-              - entity: switch.filtr_i_grzalka_socket_2
-                name: 'Grzałka '
-                secondary_info: state
-              - entity: sensor.filtr_i_grzalka_total_energy
-            title: 'Filtr i grzałka '
-      - type: grid
-        cards:
-          - type: heading
-            heading: Subbufery
-            heading_style: title
-          - type: entities
-            entities:
-              - entity: switch.sub_magnat_switch_1
-              - entity: sensor.sub_magnat_total_energy
-              - entity: switch.sub_koda_switch_1
-              - entity: sensor.sub_koda_total_energy
-            show_header_toggle: true
-    header:
-      layout: responsive
-      badges_position: bottom
-      badges_wrap: wrap
-      card:
-        type: markdown
-        text_only: true
-        content: |-
-          # Witaj {{ user }} 
-           Dodaj tutaj swój tekst, zmienne szablonu są obsługiwane ✨
-  - type: sections
-    max_columns: 4
-    title: 'Pompa dozująca '
-    path: pompa-dozujaca
-    icon: mdi:water-pump
-    sections:
-      - type: grid
-        cards:
-          - square: true
-            type: grid
-            cards:
-              - type: entities
-                entities:
-                  - entity: sensor.dozownik_nawozow_02_poziom_mikro_p1
-                    name: Poziom
-                    icon: mdi:glass-stange
-                    secondary_info: none
-                  - entity: number.dozownik_nawozow_02_butelka_p1_ml
-                    name: Pojemność
-                    icon: mdi:bottle-wine
-                  - entity: number.dozownik_nawozow_03_kalib_p1_s_ml
-                    name: Kalibracja
-                    icon: mdi:align-vertical-bottom
-                  - entity: number.dozownik_nawozow_04_dawka_p1_ml
-                    name: Dawka
-                    icon: mdi:water-pump
-                  - entity: number.dozownik_nawozow_05_czas_p1_h
-                    name: 'Godzina '
-                    icon: mdi:clock
-                  - entity: number.dozownik_nawozow_05_czas_p1_min
-                    name: Minuta
-                    icon: mdi:clock-check-outline
-                  - entity: number.dozownik_nawozow_p1_predkosc
-                    name: Prędkość
-                    icon: mdi:speedometer
-                  - entity: button.dozownik_nawozow_a_dozuj_p1
-                    name: DOZOWANIE
-                    icon: mdi:water-pump
-                  - entity: button.dozownik_nawozow_b_refill_p1_1000ml
-                    name: Uzupełnienie
-                    icon: mdi:bottle-tonic-plus
-                  - entity: button.dozownik_nawozow_c_test_10s_p1
-                    name: TEST 10S
-                    icon: mdi:history
-                  - entity: switch.dozownik_nawozow_p1_poniedzialek
-                    name: Poniedziałek
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p1_wtorek
-                    name: Wtorek
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p1_sroda
-                    name: Środa
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p1_czwartek
-                    name: Czwartek
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p1_piatek
-                    name: Piątek
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p1_sobota
-                    name: Sobota
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p1_niedziela
-                    name: Niedziela
-                    icon: mdi:calendar
-                title: Pompa P1 MIKRO
-                show_header_toggle: false
-                state_color: false
-              - type: entities
-                entities:
-                  - entity: sensor.dozownik_nawozow_02_poziom_kno3_p2
-                    name: Poziom
-                    icon: mdi:glass-stange
-                    secondary_info: none
-                  - entity: number.dozownik_nawozow_02_butelka_p2_ml
-                    name: Pojemność
-                    icon: mdi:bottle-wine
-                  - entity: number.dozownik_nawozow_03_kalib_p2_s_ml
-                    name: Kalibracja
-                    icon: mdi:align-vertical-bottom
-                  - entity: number.dozownik_nawozow_04_dawka_p2_ml
-                    name: Dawka
-                    icon: mdi:water-pump
-                  - entity: number.dozownik_nawozow_05_czas_p2_h
-                    name: 'Godzina '
-                    icon: mdi:clock
-                  - entity: number.dozownik_nawozow_05_czas_p2_min
-                    name: Minuta
-                    icon: mdi:clock-check-outline
-                  - entity: number.dozownik_nawozow_p2_predkosc
-                    name: Prędkość
-                    icon: mdi:speedometer
-                  - entity: button.dozownik_nawozow_a_dozuj_p2
-                    name: DOZOWANIE
-                    icon: mdi:water-pump
-                  - entity: button.dozownik_nawozow_b_refill_p2_1000ml
-                    name: Uzupełnienie
-                    icon: mdi:bottle-tonic-plus
-                  - entity: button.dozownik_nawozow_c_test_10s_p2
-                    name: TEST 10S
-                    icon: mdi:history
-                  - entity: switch.dozownik_nawozow_p2_poniedzialek
-                    name: Poniedziałek
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p2_wtorek
-                    name: Wtorek
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p2_sroda
-                    name: Środa
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p2_czwartek
-                    name: Czwartek
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p2_piatek
-                    name: Piątek
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p2_sobota
-                    name: Sobota
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p2_niedziela
-                    name: Niedziela
-                    icon: mdi:calendar
-                title: Pompa P2 KNO3
-                show_header_toggle: false
-                state_color: false
-              - type: entities
-                entities:
-                  - entity: sensor.dozownik_nawozow_02_poziom_k2so4_p3
-                    name: Poziom
-                    icon: mdi:glass-stange
-                    secondary_info: none
-                  - entity: number.dozownik_nawozow_02_butelka_p3_ml
-                    name: Pojemność
-                    icon: mdi:bottle-wine
-                  - entity: number.dozownik_nawozow_03_kalib_p3_s_ml
-                    name: Kalibracja
-                    icon: mdi:align-vertical-bottom
-                  - entity: number.dozownik_nawozow_04_dawka_p3_ml
-                    name: Dawka
-                    icon: mdi:water-pump
-                  - entity: number.dozownik_nawozow_05_czas_p3_h
-                    name: 'Godzina '
-                    icon: mdi:clock
-                  - entity: number.dozownik_nawozow_05_czas_p3_min
-                    name: Minuta
-                    icon: mdi:clock-check-outline
-                  - entity: number.dozownik_nawozow_p3_predkosc
-                    name: Prędkość
-                    icon: mdi:speedometer
-                  - entity: button.dozownik_nawozow_a_dozuj_p3
-                    name: DOZOWANIE
-                    icon: mdi:water-pump
-                  - entity: button.dozownik_nawozow_b_refill_p3_1000ml
-                    name: Uzupełnienie
-                    icon: mdi:bottle-tonic-plus
-                  - entity: button.dozownik_nawozow_c_test_10s_p3
-                    name: TEST 10S
-                    icon: mdi:history
-                  - entity: switch.dozownik_nawozow_p3_poniedzialek
-                    name: Poniedziałek
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p3_wtorek
-                    name: Wtorek
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p3_sroda
-                    name: Środa
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p3_czwartek
-                    name: Czwartek
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p3_piatek
-                    name: Piątek
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p3_sobota
-                    name: Sobota
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p3_niedziela
-                    name: Niedziela
-                    icon: mdi:calendar
-                title: Pompa P3 K2SO4
-                show_header_toggle: false
-                state_color: false
-            title: Pompy
-            grid_options:
-              rows: auto
-            columns: 1
-          - square: true
-            type: grid
-            cards:
-              - type: entities
-                entities:
-                  - entity: sensor.dozownik_nawozow_02_poziom_carbo_p4
-                    name: Poziom
-                    icon: mdi:glass-stange
-                    secondary_info: none
-                  - entity: number.dozownik_nawozow_02_butelka_p4_ml
-                    name: Pojemność
-                    icon: mdi:bottle-wine
-                  - entity: number.dozownik_nawozow_03_kalib_p4_s_ml
-                    name: Kalibracja
-                    icon: mdi:align-vertical-bottom
-                  - entity: number.dozownik_nawozow_04_dawka_p4_ml
-                    name: Dawka
-                    icon: mdi:water-pump
-                  - entity: number.dozownik_nawozow_05_czas_p4_h
-                    name: 'Godzina '
-                    icon: mdi:clock
-                  - entity: number.dozownik_nawozow_05_czas_p4_min
-                    name: Minuta
-                    icon: mdi:clock-check-outline
-                  - entity: number.dozownik_nawozow_p4_predkosc
-                    name: Prędkość
-                    icon: mdi:speedometer
-                  - entity: button.dozownik_nawozow_a_dozuj_p4
-                    name: DOZOWANIE
-                    icon: mdi:water-pump
-                  - entity: button.dozownik_nawozow_b_refill_p4_1000ml
-                    name: Uzupełnienie
-                    icon: mdi:bottle-tonic-plus
-                  - entity: button.dozownik_nawozow_c_test_10s_p4
-                    name: TEST 10S
-                    icon: mdi:history
-                  - entity: switch.dozownik_nawozow_p4_poniedzialek
-                    name: Poniedziałek
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p4_wtorek
-                    name: Wtorek
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p4_sroda
-                    name: Środa
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p4_czwartek
-                    name: Czwartek
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p4_piatek
-                    name: Piątek
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p4_sobota
-                    name: Sobota
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p4_niedziela
-                    name: Niedziela
-                    icon: mdi:calendar
-                title: Pompa P4 CARBO
-                show_header_toggle: false
-                state_color: false
-              - type: entities
-                entities:
-                  - entity: sensor.dozownik_nawozow_02_poziom_mgso4_p5
-                    name: Poziom
-                    icon: mdi:glass-stange
-                    secondary_info: none
-                  - entity: number.dozownik_nawozow_02_butelka_p5_ml
-                    name: Pojemność
-                    icon: mdi:bottle-wine
-                  - entity: number.dozownik_nawozow_03_kalib_p5_s_ml
-                    name: Kalibracja
-                    icon: mdi:align-vertical-bottom
-                  - entity: number.dozownik_nawozow_04_dawka_p5_ml
-                    name: Dawka
-                    icon: mdi:water-pump
-                  - entity: number.dozownik_nawozow_05_czas_p5_h
-                    name: 'Godzina '
-                    icon: mdi:clock
-                  - entity: number.dozownik_nawozow_05_czas_p5_min
-                    name: Minuta
-                    icon: mdi:clock-check-outline
-                  - entity: number.dozownik_nawozow_p5_predkosc
-                    name: Prędkość
-                    icon: mdi:speedometer
-                  - entity: button.dozownik_nawozow_a_dozuj_p5
-                    name: DOZOWANIE
-                    icon: mdi:water-pump
-                  - entity: button.dozownik_nawozow_b_refill_p5_1000ml
-                    name: Uzupełnienie
-                    icon: mdi:bottle-tonic-plus
-                  - entity: button.dozownik_nawozow_c_test_10s_p5
-                    name: TEST 10S
-                    icon: mdi:history
-                  - entity: switch.dozownik_nawozow_p5_poniedzialek
-                    name: Poniedziałek
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p5_wtorek
-                    name: Wtorek
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p5_sroda
-                    name: Środa
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p5_czwartek
-                    name: Czwartek
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p5_piatek
-                    name: Piątek
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p5_sobota
-                    name: Sobota
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p5_niedziela
-                    name: Niedziela
-                    icon: mdi:calendar
-                title: Pompa P5 MgSO4
-                show_header_toggle: false
-                state_color: false
-              - type: entities
-                entities:
-                  - entity: sensor.dozownik_nawozow_02_poziom_makro_p6
-                    name: Poziom
-                    icon: mdi:glass-stange
-                    secondary_info: none
-                  - entity: number.dozownik_nawozow_02_butelka_p6_ml
-                    name: Pojemność
-                    icon: mdi:bottle-wine
-                  - entity: number.dozownik_nawozow_03_kalib_p6_s_ml
-                    name: Kalibracja
-                    icon: mdi:align-vertical-bottom
-                  - entity: number.dozownik_nawozow_04_dawka_p6_ml
-                    name: Dawka
-                    icon: mdi:water-pump
-                  - entity: number.dozownik_nawozow_05_czas_p6_h
-                    name: 'Godzina '
-                    icon: mdi:clock
-                  - entity: number.dozownik_nawozow_05_czas_p6_min
-                    name: Minuta
-                    icon: mdi:clock-check-outline
-                  - entity: number.dozownik_nawozow_p6_predkosc
-                    name: Prędkość
-                    icon: mdi:speedometer
-                  - entity: button.dozownik_nawozow_a_dozuj_p6
-                    name: DOZOWANIE
-                    icon: mdi:water-pump
-                  - entity: button.dozownik_nawozow_b_refill_p6_1000ml
-                    name: Uzupełnienie
-                    icon: mdi:bottle-tonic-plus
-                  - entity: button.dozownik_nawozow_c_test_10s_p6
-                    name: TEST 10S
-                    icon: mdi:history
-                  - entity: switch.dozownik_nawozow_p6_poniedzialek
-                    name: Poniedziałek
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p6_wtorek
-                    name: Wtorek
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p6_sroda
-                    name: Środa
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p6_czwartek
-                    name: Czwartek
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p6_piatek
-                    name: Piątek
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p6_sobota
-                    name: Sobota
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p6_niedziela
-                    name: Niedziela
-                    icon: mdi:calendar
-                title: Pompa P6 MAKRO
-                show_header_toggle: false
-                state_color: false
-            title: Pompy
-            grid_options:
-              rows: auto
-            columns: 1
-          - type: markdown
-            content: >-
-              ### 📊 System Nawożenia 300L
-
-              | Nawóz | Dawka | Tygodniowo | Cel (ppm) |
-
-              | :--- | :---: | :---: | :---: |
-
-              | **P2: Azot (KNO3)** | {{
-              states('number.dozownik_nawozow_04_dawka_p2_ml') | float(0) }} ml
-              | {{ (states('number.dozownik_nawozow_04_dawka_p2_ml') | float(0)
-              * 0.16 * 7) | round(1) }} ppm | 10-20 |
-
-              | **P3: Potas (K2SO4)** | {{
-              states('number.dozownik_nawozow_04_dawka_p3_ml') | float(0) }} ml
-              | {{ (states('number.dozownik_nawozow_04_dawka_p3_ml') | float(0)
-              * 0.15 * 7) | round(1) }} ppm | 15-25* |
-
-              | **Suma Potasu (K)** | -- | {{
-              ((states('number.dozownik_nawozow_04_dawka_p2_ml') | float(0) *
-              0.10 + states('number.dozownik_nawozow_04_dawka_p3_ml') | float(0)
-              * 0.15) * 7) | round(1) }} ppm | 15-25 |
-
-
-              > [!INFO]
-
-              > *Potas (K) jest dostarczany z obu butelek. Tabela automatycznie
-              sumuje stężenie.*
-
-
-              **Status:** {% if
-              (states('number.dozownik_nawozow_04_dawka_p2_ml') | float(0)) > 0
-              %} ✅ Dozowanie Aktywne {% else %} ⚠️ System Wstrzymany {% endif %}
-
-
-              ---
-
-              #### 🧪 Receptura (na 1000ml RO):
-
-              * **P2 (KNO3):** 80g soli + 0.4g E202 + 0.2g E300
-
-              * **P3 (K2SO4):** 100g soli + 0.4g E202 + 0.2g E300
-
-              * **Konserwanty:** Chronią przed pleśnią i bakteriami.
-        column_span: 4
-    background:
-      opacity: 33
-      alignment: center
-      size: cover
-      repeat: repeat
-      attachment: fixed
-      image: /api/image/serve/d4586e8ec852a2c33ce61fa8d0dbdefb/original
-    cards: []
-    header:
-      card:
-        type: markdown
-        text_only: true
-        content: '# Akwarium  '
-      layout: responsive
-      badges_position: bottom
-      badges_wrap: wrap
-    badges:
-      - type: entity
-        show_name: false
-        show_state: true
-        show_icon: true
-        entity: sensor.dozownik_nawozow_00_czas_zegar_rtc
-        icon: mdi:clock-time-five-outline
-        show_entity_picture: false
-        name: RTC
-      - type: entity
-        show_name: false
-        show_state: true
-        show_icon: true
-        entity: sensor.dozownik_nawozow_temperatura_akwarium
-      - type: entity
-        show_name: false
-        show_state: true
-        show_icon: true
-        entity: sensor.dozownik_nawozow_tds_akwarium
-
         cards:
           - type: heading
             heading: Nowa sekcja
-          - type: grid
+          - type: markdown
+            content: >-
+              ### 📊 System Nawożenia 300L
+
+              | Nawóz | Dawka | Tygodniowo | Cel (ppm) |
+
+              | :--- | :---: | :---: | :---: |
+
+              | **P2: Azot (KNO3)** | {{
+              states('number.dozownik_nawozow_04_dawka_p2_ml') | float(0) }} ml
+              | {{ (states('number.dozownik_nawozow_04_dawka_p2_ml') | float(0)
+              * 0.16 * 7) | round(1) }} ppm | 10-20 |
+
+              | **P3: Potas (K2SO4)** | {{
+              states('number.dozownik_nawozow_04_dawka_p3_ml') | float(0) }} ml
+              | {{ (states('number.dozownik_nawozow_04_dawka_p3_ml') | float(0)
+              * 0.15 * 7) | round(1) }} ppm | 15-25* |
+
+              | **Suma Potasu (K)** | -- | {{
+              ((states('number.dozownik_nawozow_04_dawka_p2_ml') | float(0) *
+              0.10 + states('number.dozownik_nawozow_04_dawka_p3_ml') | float(0)
+              * 0.15) * 7) | round(1) }} ppm | 15-25 |
+
+
+              > [!INFO]
+
+              > *Potas (K) jest dostarczany z obu butelek. Tabela automatycznie
+              sumuje stężenie.*
+
+
+              **Status:** {% if
+              (states('number.dozownik_nawozow_04_dawka_p2_ml') | float(0)) > 0
+              %} ✅ Dozowanie Aktywne {% else %} ⚠️ System Wstrzymany {% endif %}
+
+
+              ---
+
+              #### 🧪 Receptura (na 1000ml RO):
+
+              * **P2 (KNO3):** 80g soli + 0.4g E202 + 0.2g E300
+
+              * **P3 (K2SO4):** 100g soli + 0.4g E202 + 0.2g E300
+
+              * **Konserwanty:** Chronią przed pleśnią i bakteriami.
+            grid_options:
+              columns: full
+        column_span: 4
+    background:
+      opacity: 33
+      alignment: center
+      size: cover
+      repeat: repeat
+      attachment: fixed
+      image: /api/image/serve/d4586e8ec852a2c33ce61fa8d0dbdefb/original
+    cards: []
+  - type: sections
+    max_columns: 4
+    title: Akwarium
+    path: Akwarium
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Nowa sekcja
+          - square: false
+            type: grid
             columns: 3
-            square: false
             cards:
               - type: vertical-stack
                 cards:
+                  - type: markdown
+                    content: >
+                      ### MIKRO ({{
+                      states('number.dozownik_nawozow_04_dawka_p1_ml') }}
+                      ml)    
+                    text_only: true
                   - type: gauge
                     entity: number.dozownik_nawozow_02_butelka_p1_ml
                     name: 'P1: Mikro'
@@ -1085,484 +668,414 @@ views:
                       red: 0
                   - type: entities
                     entities:
-                      - entity: number.dozownik_nawozow_04_dawka_p1_ml
-                        name: Dawka (ml)
                       - type: custom:fold-entity-row
                         head:
                           type: section
-                          label: 📅 Grafik P1
+                          label: Parametry P1
                         entities:
+                          - entity: number.dozownik_nawozow_04_dawka_p1_ml
+                            name: Dawka (ml)
+                            icon: mdi:water
+                          - entity: number.dozownik_nawozow_02_butelka_p1_ml
+                            name: Pojemność
+                            icon: mdi:bottle-wine
+                          - entity: number.dozownik_nawozow_03_kalib_p1_s_ml
+                            name: Kalibracja (10s)
+                            icon: mdi:align-vertical-bottom
                           - entity: number.dozownik_nawozow_05_czas_p1_h
+                            name: Godzina
+                            icon: mdi:clock-edit-outline
                           - entity: number.dozownik_nawozow_05_czas_p1_min
+                            name: Minuta
+                            icon: mdi:clock-edit-outline
+                          - entity: number.dozownik_nawozow_p1_predkosc
+                            name: Prędkość
+                            icon: mdi:speedometer
                           - entity: switch.dozownik_nawozow_p1_poniedzialek
+                            name: Poniedziałek
                           - entity: switch.dozownik_nawozow_p1_wtorek
+                            name: Wtorek
                           - entity: switch.dozownik_nawozow_p1_sroda
+                            name: Środe
                           - entity: switch.dozownik_nawozow_p1_czwartek
+                            name: Czwartek
                           - entity: switch.dozownik_nawozow_p1_piatek
+                            name: Piątek
                           - entity: switch.dozownik_nawozow_p1_sobota
+                            name: Sobota
                           - entity: switch.dozownik_nawozow_p1_niedziela
-                      - type: buttons
+                            name: Niedziela
+                      - type: custom:fold-entity-row
+                        head:
+                          type: section
+                          label: Akcje P1
                         entities:
-                          - entity: button.dozownik_nawozow_a_dozuj_p1
-                            name: DOZUJ
-                          - entity: button.dozownik_nawozow_b_refill_p1_1000ml
-                            name: UZUPEŁNIJ
+                          - type: buttons
+                            entities:
+                              - entity: button.dozownik_nawozow_a_dozuj_p1
+                                name: DOZUJ
+                              - entity: button.dozownik_nawozow_b_refill_p1_1000ml
+                                name: UZUPEŁNIJ
+                              - entity: button.dozownik_nawozow_c_test_10s_p1
+                                name: TEST 10S
+                    title: Ustawienia
               - type: vertical-stack
                 cards:
+                  - type: markdown
+                    content: >
+                      ### KNO3 ({{
+                      states('number.dozownik_nawozow_04_dawka_p2_ml') }}
+                      ml)        
+                    text_only: true
                   - type: gauge
                     entity: number.dozownik_nawozow_02_butelka_p2_ml
                     name: 'P2: KNO3'
                     min: 0
-                    max: 1000views:
-  - title: Home
-    sections:
-      - type: grid
-        cards:
-          - type: heading
-            heading: Dozownik Nawozów
-            heading_style: title
-            badges:
-              - type: entity
-                entity: sensor.dozownik_nawozow_00_czas_zegar_rtc
-          - type: entity
-            entity: sensor.dozownik_nawozow_temperatura_akwarium
-          - type: entity
-            entity: sensor.dozownik_nawozow_tds_akwarium
-      - type: grid
-        cards:
-          - type: heading
-            heading: PRALKA
-            heading_style: title
-          - type: entity
-            entity: update.haier_hon_update
-          - type: entity
-            entity: sensor.wash_dryer_program_phase
-          - type: entities
-            entities:
-              - entity: sensor.wash_dryer_total_electricity_used
-              - entity: sensor.wash_dryer_total_water_used
-              - entity: sensor.wash_dryer_total_wash_cycle
-              - entity: sensor.wash_dryer_end_time
-            state_color: true
-      - type: grid
-        cards:
-          - type: heading
-            heading_style: title
-            heading: Akwarium
-          - type: entities
-            entities:
-              - entity: sensor.co2_i_lampa_moc
-              - entity: sensor.co2_i_lampa_total_energy
-              - entity: switch.co2_i_lampa_socket_2
-                secondary_info: state
-            title: Lampa
-          - type: entities
-            entities:
-              - entity: switch.falownik_switch_1
-                name: Falownik
-                secondary_info: state
-              - entity: switch.skimer_switch_1
-                name: Falownik
-                secondary_info: state
-            title: Falowniki
-          - type: entities
-            entities:
-              - entity: switch.filtr_i_grzalka_socket_1
-                name: Filtr
-                secondary_info: state
-              - entity: sensor.filtr_i_grzalka_total_energy
-              - entity: sensor.filtr_i_grzalka_moc
-              - entity: switch.filtr_i_grzalka_socket_2
-                name: 'Grzałka '
-                secondary_info: state
-              - entity: sensor.filtr_i_grzalka_total_energy
-            title: 'Filtr i grzałka '
-      - type: grid
-        cards:
-          - type: heading
-            heading: Subbufery
-            heading_style: title
-          - type: entities
-            entities:
-              - entity: switch.sub_magnat_switch_1
-              - entity: sensor.sub_magnat_total_energy
-              - entity: switch.sub_koda_switch_1
-              - entity: sensor.sub_koda_total_energy
-            show_header_toggle: true
-    header:
-      layout: responsive
-      badges_position: bottom
-      badges_wrap: wrap
-      card:
-        type: markdown
-        text_only: true
-        content: |-
-          # Witaj {{ user }} 
-           Dodaj tutaj swój tekst, zmienne szablonu są obsługiwane ✨
-  - type: sections
-    max_columns: 4
-    title: 'Pompa dozująca '
-    path: pompa-dozujaca
-    icon: mdi:water-pump
-    sections:
-      - type: grid
-        cards:
-          - square: true
-            type: grid
-            cards:
-              - type: entities
-                entities:
-                  - entity: sensor.dozownik_nawozow_02_poziom_mikro_p1
-                    name: Poziom
-                    icon: mdi:glass-stange
-                    secondary_info: none
-                  - entity: number.dozownik_nawozow_02_butelka_p1_ml
-                    name: Pojemność
-                    icon: mdi:bottle-wine
-                  - entity: number.dozownik_nawozow_03_kalib_p1_s_ml
-                    name: Kalibracja
-                    icon: mdi:align-vertical-bottom
-                  - entity: number.dozownik_nawozow_04_dawka_p1_ml
-                    name: Dawka
-                    icon: mdi:water-pump
-                  - entity: number.dozownik_nawozow_05_czas_p1_h
-                    name: 'Godzina '
-                    icon: mdi:clock
-                  - entity: number.dozownik_nawozow_05_czas_p1_min
-                    name: Minuta
-                    icon: mdi:clock-check-outline
-                  - entity: number.dozownik_nawozow_p1_predkosc
-                    name: Prędkość
-                    icon: mdi:speedometer
-                  - entity: button.dozownik_nawozow_a_dozuj_p1
-                    name: DOZOWANIE
-                    icon: mdi:water-pump
-                  - entity: button.dozownik_nawozow_b_refill_p1_1000ml
-                    name: Uzupełnienie
-                    icon: mdi:bottle-tonic-plus
-                  - entity: button.dozownik_nawozow_c_test_10s_p1
-                    name: TEST 10S
-                    icon: mdi:history
-                  - entity: switch.dozownik_nawozow_p1_poniedzialek
-                    name: Poniedziałek
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p1_wtorek
-                    name: Wtorek
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p1_sroda
-                    name: Środa
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p1_czwartek
-                    name: Czwartek
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p1_piatek
-                    name: Piątek
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p1_sobota
-                    name: Sobota
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p1_niedziela
-                    name: Niedziela
-                    icon: mdi:calendar
-                title: Pompa P1 MIKRO
-                show_header_toggle: false
-                state_color: false
-              - type: entities
-                entities:
-                  - entity: sensor.dozownik_nawozow_02_poziom_kno3_p2
-                    name: Poziom
-                    icon: mdi:glass-stange
-                    secondary_info: none
-                  - entity: number.dozownik_nawozow_02_butelka_p2_ml
-                    name: Pojemność
-                    icon: mdi:bottle-wine
-                  - entity: number.dozownik_nawozow_03_kalib_p2_s_ml
-                    name: Kalibracja
-                    icon: mdi:align-vertical-bottom
-                  - entity: number.dozownik_nawozow_04_dawka_p2_ml
-                    name: Dawka
-                    icon: mdi:water-pump
-                  - entity: number.dozownik_nawozow_05_czas_p2_h
-                    name: 'Godzina '
-                    icon: mdi:clock
-                  - entity: number.dozownik_nawozow_05_czas_p2_min
-                    name: Minuta
-                    icon: mdi:clock-check-outline
-                  - entity: number.dozownik_nawozow_p2_predkosc
-                    name: Prędkość
-                    icon: mdi:speedometer
-                  - entity: button.dozownik_nawozow_a_dozuj_p2
-                    name: DOZOWANIE
-                    icon: mdi:water-pump
-                  - entity: button.dozownik_nawozow_b_refill_p2_1000ml
-                    name: Uzupełnienie
-                    icon: mdi:bottle-tonic-plus
-                  - entity: button.dozownik_nawozow_c_test_10s_p2
-                    name: TEST 10S
-                    icon: mdi:history
-                  - entity: switch.dozownik_nawozow_p2_poniedzialek
-                    name: Poniedziałek
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p2_wtorek
-                    name: Wtorek
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p2_sroda
-                    name: Środa
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p2_czwartek
-                    name: Czwartek
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p2_piatek
-                    name: Piątek
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p2_sobota
-                    name: Sobota
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p2_niedziela
-                    name: Niedziela
-                    icon: mdi:calendar
-                title: Pompa P2 KNO3
-                show_header_toggle: false
-                state_color: false
-              - type: entities
-                entities:
-                  - entity: sensor.dozownik_nawozow_02_poziom_k2so4_p3
-                    name: Poziom
-                    icon: mdi:glass-stange
-                    secondary_info: none
-                  - entity: number.dozownik_nawozow_02_butelka_p3_ml
-                    name: Pojemność
-                    icon: mdi:bottle-wine
-                  - entity: number.dozownik_nawozow_03_kalib_p3_s_ml
-                    name: Kalibracja
-                    icon: mdi:align-vertical-bottom
-                  - entity: number.dozownik_nawozow_04_dawka_p3_ml
-                    name: Dawka
-                    icon: mdi:water-pump
-                  - entity: number.dozownik_nawozow_05_czas_p3_h
-                    name: 'Godzina '
-                    icon: mdi:clock
-                  - entity: number.dozownik_nawozow_05_czas_p3_min
-                    name: Minuta
-                    icon: mdi:clock-check-outline
-                  - entity: number.dozownik_nawozow_p3_predkosc
-                    name: Prędkość
-                    icon: mdi:speedometer
-                  - entity: button.dozownik_nawozow_a_dozuj_p3
-                    name: DOZOWANIE
-                    icon: mdi:water-pump
-                  - entity: button.dozownik_nawozow_b_refill_p3_1000ml
-                    name: Uzupełnienie
-                    icon: mdi:bottle-tonic-plus
-                  - entity: button.dozownik_nawozow_c_test_10s_p3
-                    name: TEST 10S
-                    icon: mdi:history
-                  - entity: switch.dozownik_nawozow_p3_poniedzialek
-                    name: Poniedziałek
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p3_wtorek
-                    name: Wtorek
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p3_sroda
-                    name: Środa
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p3_czwartek
-                    name: Czwartek
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p3_piatek
-                    name: Piątek
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p3_sobota
-                    name: Sobota
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p3_niedziela
-                    name: Niedziela
-                    icon: mdi:calendar
-                title: Pompa P3 K2SO4
-                show_header_toggle: false
-                state_color: false
-            title: Pompy
+                    max: 1000
+                    needle: true
+                    severity:
+                      green: 400
+                      yellow: 150
+                      red: 0
+                  - type: entities
+                    entities:
+                      - type: custom:fold-entity-row
+                        head:
+                          type: section
+                          label: Parametry P2
+                        entities:
+                          - entity: number.dozownik_nawozow_04_dawka_p2_ml
+                            name: Dawka (ml)
+                            icon: mdi:water
+                          - entity: number.dozownik_nawozow_02_butelka_p2_ml
+                            name: Pojemność
+                            icon: mdi:bottle-wine
+                          - entity: number.dozownik_nawozow_03_kalib_p2_s_ml
+                            name: Kalibracja (10s)
+                            icon: mdi:align-vertical-bottom
+                          - entity: number.dozownik_nawozow_05_czas_p2_h
+                            name: Godzina
+                            icon: mdi:clock-edit-outline
+                          - entity: number.dozownik_nawozow_05_czas_p2_min
+                            name: Minuta
+                            icon: mdi:clock-edit-outline
+                          - entity: number.dozownik_nawozow_p2_predkosc
+                            name: Prędkość
+                            icon: mdi:speedometer
+                          - entity: switch.dozownik_nawozow_p2_poniedzialek
+                            name: Poniedziałek
+                          - entity: switch.dozownik_nawozow_p2_wtorek
+                            name: Wtorek
+                          - entity: switch.dozownik_nawozow_p2_sroda
+                            name: Środe
+                          - entity: switch.dozownik_nawozow_p2_czwartek
+                            name: Czwartek
+                          - entity: switch.dozownik_nawozow_p2_piatek
+                            name: Piątek
+                          - entity: switch.dozownik_nawozow_p2_sobota
+                            name: Sobota
+                          - entity: switch.dozownik_nawozow_p2_niedziela
+                            name: Niedziela
+                      - type: custom:fold-entity-row
+                        head:
+                          type: section
+                          label: Akcje P2
+                        entities:
+                          - type: buttons
+                            entities:
+                              - entity: button.dozownik_nawozow_a_dozuj_p2
+                                name: DOZUJ
+                              - entity: button.dozownik_nawozow_b_refill_p2_1000ml
+                                name: UZUPEŁNIJ
+                              - entity: button.dozownik_nawozow_c_test_10s_p2
+                                name: TEST 10S
+                    title: Ustawienia
+              - type: vertical-stack
+                cards:
+                  - type: markdown
+                    content: >
+                      ### K2SO4 ({{
+                      states('number.dozownik_nawozow_04_dawka_p3_ml') }}
+                      ml)    
+                    text_only: true
+                  - type: gauge
+                    entity: number.dozownik_nawozow_02_butelka_p3_ml
+                    name: 'P3: K2SO4'
+                    min: 0
+                    max: 1000
+                    needle: true
+                    severity:
+                      green: 400
+                      yellow: 150
+                      red: 0
+                  - type: entities
+                    entities:
+                      - type: custom:fold-entity-row
+                        head:
+                          type: section
+                          label: Parametry P3
+                        entities:
+                          - entity: number.dozownik_nawozow_04_dawka_p3_ml
+                            name: Dawka (ml)
+                            icon: mdi:water
+                          - entity: number.dozownik_nawozow_02_butelka_p3_ml
+                            name: Pojemność
+                            icon: mdi:bottle-wine
+                          - entity: number.dozownik_nawozow_03_kalib_p3_s_ml
+                            name: Kalibracja (10s)
+                            icon: mdi:align-vertical-bottom
+                          - entity: number.dozownik_nawozow_05_czas_p3_h
+                            name: Godzina
+                            icon: mdi:clock-edit-outline
+                          - entity: number.dozownik_nawozow_05_czas_p3_min
+                            name: Minuta
+                            icon: mdi:clock-edit-outline
+                          - entity: number.dozownik_nawozow_p3_predkosc
+                            name: Prędkość
+                            icon: mdi:speedometer
+                          - entity: switch.dozownik_nawozow_p3_poniedzialek
+                            name: Poniedziałek
+                          - entity: switch.dozownik_nawozow_p3_wtorek
+                            name: Wtorek
+                          - entity: switch.dozownik_nawozow_p3_sroda
+                            name: Środe
+                          - entity: switch.dozownik_nawozow_p3_czwartek
+                            name: Czwartek
+                          - entity: switch.dozownik_nawozow_p3_piatek
+                            name: Piątek
+                          - entity: switch.dozownik_nawozow_p3_sobota
+                            name: Sobota
+                          - entity: switch.dozownik_nawozow_p3_niedziela
+                            name: Niedziela
+                      - type: custom:fold-entity-row
+                        head:
+                          type: section
+                          label: Akcje P3
+                        entities:
+                          - type: buttons
+                            entities:
+                              - entity: button.dozownik_nawozow_a_dozuj_p3
+                                name: DOZUJ
+                              - entity: button.dozownik_nawozow_b_refill_p3_1000ml
+                                name: UZUPEŁNIJ
+                              - entity: button.dozownik_nawozow_c_test_10s_p3
+                                name: TEST 10S
+                    title: Ustawienia
+              - type: vertical-stack
+                cards:
+                  - type: markdown
+                    content: >
+                      ### CARBO ({{
+                      states('number.dozownik_nawozow_04_dawka_p4_ml') }}
+                      ml)    
+                    text_only: true
+                  - type: gauge
+                    entity: number.dozownik_nawozow_02_butelka_p4_ml
+                    name: P4 Carbo
+                    min: 0
+                    max: 1000
+                    needle: true
+                    severity:
+                      green: 400
+                      yellow: 150
+                      red: 0
+                  - type: entities
+                    entities:
+                      - type: custom:fold-entity-row
+                        head:
+                          type: section
+                          label: Parametry P4
+                        entities:
+                          - entity: number.dozownik_nawozow_04_dawka_p4_ml
+                            name: Dawka (ml)
+                            icon: mdi:water
+                          - entity: number.dozownik_nawozow_02_butelka_p4_ml
+                            name: Pojemność
+                            icon: mdi:bottle-wine
+                          - entity: number.dozownik_nawozow_03_kalib_p4_s_ml
+                            name: Kalibracja (10s)
+                            icon: mdi:align-vertical-bottom
+                          - entity: number.dozownik_nawozow_05_czas_p4_h
+                            name: Godzina
+                            icon: mdi:clock-edit-outline
+                          - entity: number.dozownik_nawozow_05_czas_p4_min
+                            name: Minuta
+                            icon: mdi:clock-edit-outline
+                          - entity: number.dozownik_nawozow_p4_predkosc
+                            name: Prędkość
+                            icon: mdi:speedometer
+                          - entity: switch.dozownik_nawozow_p4_poniedzialek
+                            name: Poniedziałek
+                          - entity: switch.dozownik_nawozow_p4_wtorek
+                            name: Wtorek
+                          - entity: switch.dozownik_nawozow_p4_sroda
+                            name: Środe
+                          - entity: switch.dozownik_nawozow_p4_czwartek
+                            name: Czwartek
+                          - entity: switch.dozownik_nawozow_p4_piatek
+                            name: Piątek
+                          - entity: switch.dozownik_nawozow_p4_sobota
+                            name: Sobota
+                          - entity: switch.dozownik_nawozow_p4_niedziela
+                            name: Niedziela
+                      - type: custom:fold-entity-row
+                        head:
+                          type: section
+                          label: Akcje P4
+                        entities:
+                          - type: buttons
+                            entities:
+                              - entity: button.dozownik_nawozow_a_dozuj_p4
+                                name: DOZUJ
+                              - entity: button.dozownik_nawozow_b_refill_p4_1000ml
+                                name: UZUPEŁNIJ
+                              - entity: button.dozownik_nawozow_c_test_10s_p4
+                                name: TEST 10S
+                    title: Ustawienia
+              - type: vertical-stack
+                cards:
+                  - type: markdown
+                    content: >
+                      ### MgSO4 ({{
+                      states('number.dozownik_nawozow_04_dawka_p5_ml') }}
+                      ml)    
+                    text_only: true
+                  - type: gauge
+                    entity: number.dozownik_nawozow_02_butelka_p5_ml
+                    name: 'P5: MgSO4'
+                    min: 0
+                    max: 1000
+                    needle: true
+                    severity:
+                      green: 400
+                      yellow: 150
+                      red: 0
+                  - type: entities
+                    entities:
+                      - type: custom:fold-entity-row
+                        head:
+                          type: section
+                          label: Parametry P5
+                        entities:
+                          - entity: number.dozownik_nawozow_04_dawka_p5_ml
+                            name: Dawka (ml)
+                            icon: mdi:water
+                          - entity: number.dozownik_nawozow_02_butelka_p5_ml
+                            name: Pojemność
+                            icon: mdi:bottle-wine
+                          - entity: number.dozownik_nawozow_03_kalib_p5_s_ml
+                            name: Kalibracja (10s)
+                            icon: mdi:align-vertical-bottom
+                          - entity: number.dozownik_nawozow_05_czas_p5_h
+                            name: Godzina
+                            icon: mdi:clock-edit-outline
+                          - entity: number.dozownik_nawozow_05_czas_p5_min
+                            name: Minuta
+                            icon: mdi:clock-edit-outline
+                          - entity: number.dozownik_nawozow_p5_predkosc
+                            name: Prędkość
+                            icon: mdi:speedometer
+                          - entity: switch.dozownik_nawozow_p5_poniedzialek
+                            name: Poniedziałek
+                          - entity: switch.dozownik_nawozow_p5_wtorek
+                            name: Wtorek
+                          - entity: switch.dozownik_nawozow_p5_sroda
+                            name: Środe
+                          - entity: switch.dozownik_nawozow_p5_czwartek
+                            name: Czwartek
+                          - entity: switch.dozownik_nawozow_p5_piatek
+                            name: Piątek
+                          - entity: switch.dozownik_nawozow_p5_sobota
+                            name: Sobota
+                          - entity: switch.dozownik_nawozow_p5_niedziela
+                            name: Niedziela
+                      - type: custom:fold-entity-row
+                        head:
+                          type: section
+                          label: Akcje P5
+                        entities:
+                          - type: buttons
+                            entities:
+                              - entity: button.dozownik_nawozow_a_dozuj_p5
+                                name: DOZUJ
+                              - entity: button.dozownik_nawozow_b_refill_p5_1000ml
+                                name: UZUPEŁNIJ
+                              - entity: button.dozownik_nawozow_c_test_10s_p5
+                                name: TEST 10S
+                    title: Ustawienia
+              - type: vertical-stack
+                cards:
+                  - type: markdown
+                    content: >
+                      ### MAKRO ({{
+                      states('number.dozownik_nawozow_04_dawka_p6_ml') }}
+                      ml)    
+                    text_only: true
+                  - type: gauge
+                    entity: number.dozownik_nawozow_02_butelka_p6_ml
+                    name: 'P6: Makro'
+                    min: 0
+                    max: 1000
+                    needle: true
+                    severity:
+                      green: 400
+                      yellow: 150
+                      red: 0
+                  - type: entities
+                    entities:
+                      - type: custom:fold-entity-row
+                        head:
+                          type: section
+                          label: Parametry P6
+                        entities:
+                          - entity: number.dozownik_nawozow_04_dawka_p6_ml
+                            name: Dawka (ml)
+                            icon: mdi:water
+                          - entity: number.dozownik_nawozow_02_butelka_p6_ml
+                            name: Pojemność
+                            icon: mdi:bottle-wine
+                          - entity: number.dozownik_nawozow_03_kalib_p6_s_ml
+                            name: Kalibracja (10s)
+                            icon: mdi:align-vertical-bottom
+                          - entity: number.dozownik_nawozow_05_czas_p6_h
+                            name: Godzina
+                            icon: mdi:clock-edit-outline
+                          - entity: number.dozownik_nawozow_05_czas_p6_min
+                            name: Minuta
+                            icon: mdi:clock-edit-outline
+                          - entity: number.dozownik_nawozow_p6_predkosc
+                            name: Prędkość
+                            icon: mdi:speedometer
+                          - entity: switch.dozownik_nawozow_p6_poniedzialek
+                            name: Poniedziałek
+                          - entity: switch.dozownik_nawozow_p6_wtorek
+                            name: Wtorek
+                          - entity: switch.dozownik_nawozow_p6_sroda
+                            name: Środe
+                          - entity: switch.dozownik_nawozow_p6_czwartek
+                            name: Czwartek
+                          - entity: switch.dozownik_nawozow_p6_piatek
+                            name: Piątek
+                          - entity: switch.dozownik_nawozow_p6_sobota
+                            name: Sobota
+                          - entity: switch.dozownik_nawozow_p6_niedziela
+                            name: Niedziela
+                      - type: custom:fold-entity-row
+                        head:
+                          type: section
+                          label: Akcje P6
+                        entities:
+                          - type: buttons
+                            entities:
+                              - entity: button.dozownik_nawozow_a_dozuj_p6
+                                name: DOZUJ
+                              - entity: button.dozownik_nawozow_b_refill_p6_1000ml
+                                name: UZUPEŁNIJ
+                              - entity: button.dozownik_nawozow_c_test_10s_p6
+                                name: TEST 10S
+                    title: Ustawienia
             grid_options:
-              rows: auto
-            columns: 1
-          - square: true
-            type: grid
-            cards:
-              - type: entities
-                entities:
-                  - entity: sensor.dozownik_nawozow_02_poziom_carbo_p4
-                    name: Poziom
-                    icon: mdi:glass-stange
-                    secondary_info: none
-                  - entity: number.dozownik_nawozow_02_butelka_p4_ml
-                    name: Pojemność
-                    icon: mdi:bottle-wine
-                  - entity: number.dozownik_nawozow_03_kalib_p4_s_ml
-                    name: Kalibracja
-                    icon: mdi:align-vertical-bottom
-                  - entity: number.dozownik_nawozow_04_dawka_p4_ml
-                    name: Dawka
-                    icon: mdi:water-pump
-                  - entity: number.dozownik_nawozow_05_czas_p4_h
-                    name: 'Godzina '
-                    icon: mdi:clock
-                  - entity: number.dozownik_nawozow_05_czas_p4_min
-                    name: Minuta
-                    icon: mdi:clock-check-outline
-                  - entity: number.dozownik_nawozow_p4_predkosc
-                    name: Prędkość
-                    icon: mdi:speedometer
-                  - entity: button.dozownik_nawozow_a_dozuj_p4
-                    name: DOZOWANIE
-                    icon: mdi:water-pump
-                  - entity: button.dozownik_nawozow_b_refill_p4_1000ml
-                    name: Uzupełnienie
-                    icon: mdi:bottle-tonic-plus
-                  - entity: button.dozownik_nawozow_c_test_10s_p4
-                    name: TEST 10S
-                    icon: mdi:history
-                  - entity: switch.dozownik_nawozow_p4_poniedzialek
-                    name: Poniedziałek
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p4_wtorek
-                    name: Wtorek
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p4_sroda
-                    name: Środa
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p4_czwartek
-                    name: Czwartek
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p4_piatek
-                    name: Piątek
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p4_sobota
-                    name: Sobota
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p4_niedziela
-                    name: Niedziela
-                    icon: mdi:calendar
-                title: Pompa P4 CARBO
-                show_header_toggle: false
-                state_color: false
-              - type: entities
-                entities:
-                  - entity: sensor.dozownik_nawozow_02_poziom_mgso4_p5
-                    name: Poziom
-                    icon: mdi:glass-stange
-                    secondary_info: none
-                  - entity: number.dozownik_nawozow_02_butelka_p5_ml
-                    name: Pojemność
-                    icon: mdi:bottle-wine
-                  - entity: number.dozownik_nawozow_03_kalib_p5_s_ml
-                    name: Kalibracja
-                    icon: mdi:align-vertical-bottom
-                  - entity: number.dozownik_nawozow_04_dawka_p5_ml
-                    name: Dawka
-                    icon: mdi:water-pump
-                  - entity: number.dozownik_nawozow_05_czas_p5_h
-                    name: 'Godzina '
-                    icon: mdi:clock
-                  - entity: number.dozownik_nawozow_05_czas_p5_min
-                    name: Minuta
-                    icon: mdi:clock-check-outline
-                  - entity: number.dozownik_nawozow_p5_predkosc
-                    name: Prędkość
-                    icon: mdi:speedometer
-                  - entity: button.dozownik_nawozow_a_dozuj_p5
-                    name: DOZOWANIE
-                    icon: mdi:water-pump
-                  - entity: button.dozownik_nawozow_b_refill_p5_1000ml
-                    name: Uzupełnienie
-                    icon: mdi:bottle-tonic-plus
-                  - entity: button.dozownik_nawozow_c_test_10s_p5
-                    name: TEST 10S
-                    icon: mdi:history
-                  - entity: switch.dozownik_nawozow_p5_poniedzialek
-                    name: Poniedziałek
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p5_wtorek
-                    name: Wtorek
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p5_sroda
-                    name: Środa
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p5_czwartek
-                    name: Czwartek
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p5_piatek
-                    name: Piątek
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p5_sobota
-                    name: Sobota
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p5_niedziela
-                    name: Niedziela
-                    icon: mdi:calendar
-                title: Pompa P5 MgSO4
-                show_header_toggle: false
-                state_color: false
-              - type: entities
-                entities:
-                  - entity: sensor.dozownik_nawozow_02_poziom_makro_p6
-                    name: Poziom
-                    icon: mdi:glass-stange
-                    secondary_info: none
-                  - entity: number.dozownik_nawozow_02_butelka_p6_ml
-                    name: Pojemność
-                    icon: mdi:bottle-wine
-                  - entity: number.dozownik_nawozow_03_kalib_p6_s_ml
-                    name: Kalibracja
-                    icon: mdi:align-vertical-bottom
-                  - entity: number.dozownik_nawozow_04_dawka_p6_ml
-                    name: Dawka
-                    icon: mdi:water-pump
-                  - entity: number.dozownik_nawozow_05_czas_p6_h
-                    name: 'Godzina '
-                    icon: mdi:clock
-                  - entity: number.dozownik_nawozow_05_czas_p6_min
-                    name: Minuta
-                    icon: mdi:clock-check-outline
-                  - entity: number.dozownik_nawozow_p6_predkosc
-                    name: Prędkość
-                    icon: mdi:speedometer
-                  - entity: button.dozownik_nawozow_a_dozuj_p6
-                    name: DOZOWANIE
-                    icon: mdi:water-pump
-                  - entity: button.dozownik_nawozow_b_refill_p6_1000ml
-                    name: Uzupełnienie
-                    icon: mdi:bottle-tonic-plus
-                  - entity: button.dozownik_nawozow_c_test_10s_p6
-                    name: TEST 10S
-                    icon: mdi:history
-                  - entity: switch.dozownik_nawozow_p6_poniedzialek
-                    name: Poniedziałek
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p6_wtorek
-                    name: Wtorek
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p6_sroda
-                    name: Środa
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p6_czwartek
-                    name: Czwartek
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p6_piatek
-                    name: Piątek
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p6_sobota
-                    name: Sobota
-                    icon: mdi:calendar
-                  - entity: switch.dozownik_nawozow_p6_niedziela
-                    name: Niedziela
-                    icon: mdi:calendar
-                title: Pompa P6 MAKRO
-                show_header_toggle: false
-                state_color: false
-            title: Pompy
-            grid_options:
-              rows: auto
-            columns: 1
+              columns: full
           - type: markdown
             content: >-
               ### 📊 System Nawożenia 300L
@@ -1607,23 +1120,41 @@ views:
               * **P3 (K2SO4):** 100g soli + 0.4g E202 + 0.2g E300
 
               * **Konserwanty:** Chronią przed pleśnią i bakteriami.
+            grid_options:
+              columns: full
         column_span: 4
-    background:
-      opacity: 33
-      alignment: center
-      size: cover
-      repeat: repeat
-      attachment: fixed
-      image: /api/image/serve/d4586e8ec852a2c33ce61fa8d0dbdefb/original
-    cards: []
+      - type: grid
+        cards:
+          - type: heading
+            heading: Nowa sekcja
+          - type: entities
+            title: Konfiguracja Podmiany 120L
+            show_header_toggle: false
+            entities:
+              - entity: number.dozownik_nawozow_06_podmiana_p1_mikro_ml
+                name: P1 Mikro
+              - entity: number.dozownik_nawozow_06_podmiana_p2_azot_ml
+                name: P2 KNO3
+              - entity: number.dozownik_nawozow_06_podmiana_p3_potas_ml
+                name: P3 K2SO4
+              - entity: number.dozownik_nawozow_06_podmiana_p4_carbo_ml
+                name: P4 Carbo
+              - entity: number.dozownik_nawozow_06_podmiana_p5_mgso4_ml
+                name: P5 MgSO4
+              - entity: number.dozownik_nawozow_06_podmiana_p6_makro_ml
+                name: P6 MAKRO
+              - type: divider
+              - entity: button.dozownik_nawozow_d_podmiana_uruchom_wyrownanie_p1_p6
+                name: PODAJ WSZYSTKO TERAZ
     header:
-      card:
-        type: markdown
-        text_only: true
-        content: '# Akwarium  '
       layout: responsive
       badges_position: bottom
       badges_wrap: wrap
+      card:
+        type: markdown
+        text_only: true
+        title: Akwarium
+        content: '# Akwarium: dozownik nawozów'
     badges:
       - type: entity
         show_name: false
@@ -1639,178 +1170,23 @@ views:
         show_icon: true
         entity: sensor.dozownik_nawozow_temperatura_akwarium
       - type: entity
-        show_name: false
+        show_name: true
         show_state: true
         show_icon: true
         entity: sensor.dozownik_nawozow_tds_akwarium
-
-                    needle: true
-                    severity:
-                      green: 400
-                      yellow: 150
-                      red: 0
-                  - type: entities
-                    entities:
-                      - entity: number.dozownik_nawozow_04_dawka_p2_ml
-                        name: Dawka (ml)
-                      - type: custom:fold-entity-row
-                        head:
-                          type: section
-                          label: 📅 Grafik P2
-                        entities:
-                          - entity: number.dozownik_nawozow_05_czas_p2_h
-                          - entity: number.dozownik_nawozow_05_czas_p2_min
-                          - entity: switch.dozownik_nawozow_p2_poniedzialek
-                          - entity: switch.dozownik_nawozow_p2_wtorek
-                          - entity: switch.dozownik_nawozow_p2_sroda
-                          - entity: switch.dozownik_nawozow_p2_czwartek
-                          - entity: switch.dozownik_nawozow_p2_piatek
-                          - entity: switch.dozownik_nawozow_p2_sobota
-                          - entity: switch.dozownik_nawozow_p2_niedziela
-                      - type: buttons
-                        entities:
-                          - entity: button.dozownik_nawozow_a_dozuj_p2
-                          - entity: button.dozownik_nawozow_b_refill_p2_1000ml
-              - type: vertical-stack
-                cards:
-                  - type: gauge
-                    entity: number.dozownik_nawozow_02_butelka_p3_ml
-                    name: 'P3: K2SO4'
-                    min: 0
-                    max: 1000
-                    needle: true
-                    severity:
-                      green: 400
-                      yellow: 150
-                      red: 0
-                  - type: entities
-                    entities:
-                      - entity: number.dozownik_nawozow_04_dawka_p3_ml
-                        name: Dawka (ml)
-                      - type: custom:fold-entity-row
-                        head:
-                          type: section
-                          label: 📅 Grafik P3
-                        entities:
-                          - entity: number.dozownik_nawozow_05_czas_p3_h
-                          - entity: number.dozownik_nawozow_05_czas_p3_min
-                          - entity: switch.dozownik_nawozow_p3_poniedzialek
-                          - entity: switch.dozownik_nawozow_p3_wtorek
-                          - entity: switch.dozownik_nawozow_p3_sroda
-                          - entity: switch.dozownik_nawozow_p3_czwartek
-                          - entity: switch.dozownik_nawozow_p3_piatek
-                          - entity: switch.dozownik_nawozow_p3_sobota
-                          - entity: switch.dozownik_nawozow_p3_niedziela
-                      - type: buttons
-                        entities:
-                          - entity: button.dozownik_nawozow_a_dozuj_p3
-                          - entity: button.dozownik_nawozow_b_refill_p3_1000ml
-              - type: vertical-stack
-                cards:
-                  - type: gauge
-                    entity: number.dozownik_nawozow_02_butelka_p4_ml
-                    name: 'P4: Carbo'
-                    min: 0
-                    max: 1000
-                    needle: true
-                    severity:
-                      green: 400
-                      yellow: 150
-                      red: 0
-                  - type: entities
-                    entities:
-                      - entity: number.dozownik_nawozow_04_dawka_p4_ml
-                        name: Dawka (ml)
-                      - type: custom:fold-entity-row
-                        head:
-                          type: section
-                          label: 📅 Grafik P4
-                        entities:
-                          - entity: number.dozownik_nawozow_05_czas_p4_h
-                          - entity: number.dozownik_nawozow_05_czas_p4_min
-                          - entity: switch.dozownik_nawozow_p4_poniedzialek
-                          - entity: switch.dozownik_nawozow_p4_wtorek
-                          - entity: switch.dozownik_nawozow_p4_sroda
-                          - entity: switch.dozownik_nawozow_p4_czwartek
-                          - entity: switch.dozownik_nawozow_p4_piatek
-                          - entity: switch.dozownik_nawozow_p4_sobota
-                          - entity: switch.dozownik_nawozow_p4_niedziela
-                      - type: buttons
-                        entities:
-                          - entity: button.dozownik_nawozow_a_dozuj_p4
-                          - entity: button.dozownik_nawozow_b_refill_p4_1000ml
-              - type: vertical-stack
-                cards:
-                  - type: gauge
-                    entity: number.dozownik_nawozow_02_butelka_p5_ml
-                    name: 'P5: MgSO4'
-                    min: 0
-                    max: 1000
-                    needle: true
-                    severity:
-                      green: 400
-                      yellow: 150
-                      red: 0
-                  - type: entities
-                    entities:
-                      - entity: number.dozownik_nawozow_04_dawka_p5_ml
-                        name: Dawka (ml)
-                      - type: custom:fold-entity-row
-                        head:
-                          type: section
-                          label: 📅 Grafik P5
-                        entities:
-                          - entity: number.dozownik_nawozow_05_czas_p5_h
-                          - entity: number.dozownik_nawozow_05_czas_p5_min
-                          - entity: switch.dozownik_nawozow_p5_poniedzialek
-                          - entity: switch.dozownik_nawozow_p5_wtorek
-                          - entity: switch.dozownik_nawozow_p5_sroda
-                          - entity: switch.dozownik_nawozow_p5_czwartek
-                          - entity: switch.dozownik_nawozow_p5_piatek
-                          - entity: switch.dozownik_nawozow_p5_sobota
-                          - entity: switch.dozownik_nawozow_p5_niedziela
-                      - type: buttons
-                        entities:
-                          - entity: button.dozownik_nawozow_a_dozuj_p5
-                          - entity: button.dozownik_nawozow_b_refill_p5_1000ml
-              - type: vertical-stack
-                cards:
-                  - type: gauge
-                    entity: number.dozownik_nawozow_02_butelka_p6_ml
-                    name: 'P6: Makro'
-                    min: 0
-                    max: 1000
-                    needle: true
-                    severity:
-                      green: 400
-                      yellow: 150
-                      red: 0
-                  - type: entities
-                    entities:
-                      - entity: number.dozownik_nawozow_04_dawka_p6_ml
-                        name: Dawka (ml)
-                      - type: custom:fold-entity-row
-                        head:
-                          type: section
-                          label: 📅 Grafik P6
-                        entities:
-                          - entity: number.dozownik_nawozow_05_czas_p6_h
-                          - entity: number.dozownik_nawozow_05_czas_p6_min
-                          - entity: switch.dozownik_nawozow_p6_poniedzialek
-                          - entity: switch.dozownik_nawozow_p6_wtorek
-                          - entity: switch.dozownik_nawozow_p6_sroda
-                          - entity: switch.dozownik_nawozow_p6_czwartek
-                          - entity: switch.dozownik_nawozow_p6_piatek
-                          - entity: switch.dozownik_nawozow_p6_sobota
-                          - entity: switch.dozownik_nawozow_p6_niedziela
-                      - type: buttons
-                        entities:
-                          - entity: button.dozownik_nawozow_a_dozuj_p6
-                          - entity: button.dozownik_nawozow_b_refill_p6_1000ml
-            grid_options:
-              columns: full
-        column_span: 4
-    header:
-      layout: responsive
-      badges_position: bottom
-      badges_wrap: wrap
+        name: TDS
+      - type: entity
+        show_name: false
+        show_state: true
+        show_icon: true
+        entity: sensor.dozownik_nawozow_ph_akwarium
+        name: PH
+    subview: false
+    cards: []
+    background:
+      opacity: 33
+      alignment: center
+      size: cover
+      repeat: repeat
+      attachment: fixed
+      image: /api/image/serve/d4586e8ec852a2c33ce61fa8d0dbdefb/original
