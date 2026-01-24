@@ -88,6 +88,9 @@ time:
     id: ds_time
     timezone: "Europe/Warsaw"
     update_interval: 1min
+    on_time_sync:
+      then:
+        - logger.log: "Synchronizacja czasu RTC z NTP zakończona sukcesem"
     on_time:
       - seconds: 0
         then:
@@ -337,51 +340,7 @@ script:
           auto call = id(p2_level).make_call();
           call.set_value(max(0.0f, id(p2_level).state - id(d2).state));
           call.perform();
-          global_preferences->sync();        
-# --- SKRYPTY DAWKOWANIA Z REGULACJĄ PRĘDKOŚCI I SOFT-STARTEM ---
-script:
-  - id: script_p1
-    mode: queued
-    then:
-      - light.turn_on:
-          id: p1
-          brightness: !lambda "return id(p1_speed).state / 100.0;"
-      - delay: !lambda "return id(d1).state * id(c1).state * 1000;"
-      - light.turn_off: p1
-      - lambda: |-
-          auto call = id(p1_level).make_call();
-          call.set_value(max(0.0f, id(p1_level).state - id(d1).state));
-          call.perform();
           global_preferences->sync();
-
-  - id: script_p2
-    mode: queued
-    then:
-      - light.turn_on:
-          id: p2
-          brightness: !lambda "return id(p2_speed).state / 100.0;"
-      - delay: !lambda "return id(d2).state * id(c2).state * 1000;"
-      - light.turn_off: p2
-      - lambda: |-
-          auto call = id(p2_level).make_call();
-          call.set_value(max(0.0f, id(p2_level).state - id(d2).state));
-          call.perform();
-          global_preferences->sync();
-
-  - id: script_p3
-    mode: queued
-    then:
-      - light.turn_on:
-          id: p3
-          brightness: !lambda "return id(p3_speed).state / 100.0;"
-      - delay: !lambda "return id(d3).state * id(c3).state * 1000;"
-      - light.turn_off: p3
-      - lambda: |-
-          auto call = id(p3_level).make_call();
-          call.set_value(max(0.0f, id(p3_level).state - id(d3).state));
-          call.perform();
-          global_preferences->sync();
-
 
   - id: script_p3
     mode: queued
