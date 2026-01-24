@@ -43,9 +43,17 @@ i2c:
   frequency: 400kHz
 
 
+# ads1115:
+#   - address: 0x48
+#     id: ads_hub
+
 ads1115:
+  - address: 0x49
+    id: ads_ph
+
   - address: 0x48
-    id: ads_hub
+    id: ads_tds
+
 
 one_wire:
   - platform: gpio
@@ -54,6 +62,13 @@ one_wire:
 logger:
   level: DEBUG
 
+# logger:
+#   level: DEBUG             # Globalnie pozwalamy na wszystko (w tym DEBUG)
+#   logs:
+#     text_sensor: WARN      # Wyciszamy paski butelek (żeby nie śmieciły)
+#     ds1307: ERROR          # Wyciszamy błędy zegara
+#     api: WARN              # Wyciszamy komunikację z HA
+#     wifi: WARN             # Wyciszamy status Wi-Fi
 
 # odkomentować po odpaleniu czujnikówsssddd
 # interval:
@@ -205,6 +220,9 @@ time:
   - platform: sntp
     id: sntp_time
     timezone: "Europe/Warsaw"
+    on_time_sync:
+      then:
+        - ds1307.write_time: # Ta linia zapisuje czas z internetu do Twojej bateryjnej kostki
 
 
 sensor:
@@ -214,16 +232,35 @@ sensor:
   #   id: ph_sensor_id
   #   lambda: 'return 6.85;'
   
-  - platform: ads1115
+  # - platform: ads1115
+  #   multiplexer: 'A0_GND'
+  #   ads1115_id: ads_tds
+  #   gain: 6.144
+  #   name: "TDS Voltage"
+  #   id: tds_voltage
+  #   update_interval: 2s
+  #   unit_of_measurement: "V"
+    # filters:
+    #   - sliding_window_moving_average:
+    #       window_size: 15  # Średnia z 15 pomiarów
+    #       send_every: 5     # Wyślij wynik do HA i Lambdy co 5 sekund
+
+ # --- SENSOR TDS (na ADS 0x48) ---
+  - platform: ads1115 
     multiplexer: 'A0_GND'
-    gain: 4.096
+    ads1115_id: ads_tds
+    gain: 6.144
     name: "TDS Voltage"
     id: tds_voltage
-    update_interval: 5s
-    unit_of_measurement: "V"
-
+    update_interval: 2s
+    filters:
+      - median:
+          window_size: 5
+          send_every: 1
+# --- SENSOR pH (na ADS 0x49) ---
   - platform: ads1115
-    multiplexer: 'A1_GND'
+    multiplexer: 'A0_GND'
+    ads1115_id: ads_ph
     gain: 4.096
     name: "pH Akwarium"
     id: ph_akwarium
@@ -248,30 +285,59 @@ sensor:
     accuracy_decimals: 1
 
 
+
+
   - platform: template
     name: "TDS Akwarium"
     id: tds_real
     unit_of_measurement: "ppm"
     accuracy_decimals: 0
     lambda: |-
-      float voltage = id(tds_voltage).state;
+      float v = id(tds_voltage).state;
       float temp = id(temp_akwarium).state;
-      
-      // Jeśli napięcie jest za niskie lub czujnik temp nie odczytał danych (NaN)
-      if (voltage < 0.1 || isnan(temp)) return 0.0;
-      
-      // Standardowy wzór na kompensację temperatury (odniesienie do 25°C)
-      // Współczynnik 0.02 (2%) jest optymalny dla wody akwariowej
-      float compensationCoefficient = 1.0 + 0.02 * (temp - 25.0);
-      float compensationVoltage = voltage / compensationCoefficient;
-      
-      // Obliczamy TDS z wielomianu bazowego
-      float base = (133.42 * pow(compensationVoltage, 3) - 255.86 * pow(compensationVoltage, 2) + 857.39 * compensationVoltage);
-      
-      // Twój indywidualny mnożnik kalibracji
-      return base * 0.85;
-    update_interval: 10s
-        
+
+      if (v < 0.02 || isnan(temp)) return 0.0;
+
+      float v_corr = v / (1.0 + 0.02 * (temp - 25.0));
+
+      // FINALNA KALIBRACJA:
+      // Przy v=0.075V pokaże: (0.075 - 0.079) * 463 + 38 = -1.8 + 38 = ~36 ppm
+      float ppm = (v_corr - 0.079) * 463.0 + 38.0;
+
+      if (ppm < 0) return 0.0;
+      return ppm;
+    update_interval: 5s
+
+       
+# --- SKRYPTY DAWKOWANIA Z REGULACJĄ PRĘDKOŚCI I SOFT-STARTEM ---
+script:
+  - id: script_p1
+    mode: queued
+    then:
+      - light.turn_on:
+          id: p1
+          brightness: !lambda "return id(p1_speed).state / 100.0;"
+      - delay: !lambda "return id(d1).state * id(c1).state * 1000;"
+      - light.turn_off: p1
+      - lambda: |-
+          auto call = id(p1_level).make_call();
+          call.set_value(max(0.0f, id(p1_level).state - id(d1).state));
+          call.perform();
+          global_preferences->sync();
+
+  - id: script_p2
+    mode: queued
+    then:
+      - light.turn_on:
+          id: p2
+          brightness: !lambda "return id(p2_speed).state / 100.0;"
+      - delay: !lambda "return id(d2).state * id(c2).state * 1000;"
+      - light.turn_off: p2
+      - lambda: |-
+          auto call = id(p2_level).make_call();
+          call.set_value(max(0.0f, id(p2_level).state - id(d2).state));
+          call.perform();
+          global_preferences->sync();        
 # --- SKRYPTY DAWKOWANIA Z REGULACJĄ PRĘDKOŚCI I SOFT-STARTEM ---
 script:
   - id: script_p1
@@ -301,6 +367,21 @@ script:
           call.set_value(max(0.0f, id(p2_level).state - id(d2).state));
           call.perform();
           global_preferences->sync();
+
+  - id: script_p3
+    mode: queued
+    then:
+      - light.turn_on:
+          id: p3
+          brightness: !lambda "return id(p3_speed).state / 100.0;"
+      - delay: !lambda "return id(d3).state * id(c3).state * 1000;"
+      - light.turn_off: p3
+      - lambda: |-
+          auto call = id(p3_level).make_call();
+          call.set_value(max(0.0f, id(p3_level).state - id(d3).state));
+          call.perform();
+          global_preferences->sync();
+
 
   - id: script_p3
     mode: queued
