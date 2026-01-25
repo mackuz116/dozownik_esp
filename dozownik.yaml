@@ -229,25 +229,6 @@ time:
 
 
 sensor:
-  
-  # - platform: template
-  #   name: "Manualne pH"
-  #   id: ph_sensor_id
-  #   lambda: 'return 6.85;'
-  
-  # - platform: ads1115
-  #   multiplexer: 'A0_GND'
-  #   ads1115_id: ads_tds
-  #   gain: 6.144
-  #   name: "TDS Voltage"
-  #   id: tds_voltage
-  #   update_interval: 2s
-  #   unit_of_measurement: "V"
-    # filters:
-    #   - sliding_window_moving_average:
-    #       window_size: 15  # Średnia z 15 pomiarów
-    #       send_every: 5     # Wyślij wynik do HA i Lambdy co 5 sekund
-
  # --- SENSOR TDS (na ADS 0x48) ---
   - platform: ads1115 
     multiplexer: 'A0_GND'
@@ -260,25 +241,74 @@ sensor:
       - median:
           window_size: 5
           send_every: 1
-# --- SENSOR pH (na ADS 0x49) ---
+
+# OK 
+  # - platform: ads1115
+  #   multiplexer: 'A0_GND'
+  #   ads1115_id: ads_ph
+  #   gain: 6.144
+  #   name: "pH Akwarium"
+  #   id: ph_akwarium
+  #   unit_of_measurement: "pH"
+  #   accuracy_decimals: 2
+  #   update_interval: 5s
+  #   filters:
+  #     - calibrate_linear:
+  #         method: exact
+  #         datapoints:
+  #           - from: 3.654
+  #             to: 7.07    # PUNKT NEUTRALNY: Twoje akwarium (napięcie -> miernik ręczny)
+  #           - from: 4.140
+  #             to: 6.39    # PUNKT POŚREDNI: Z Twojej poprzedniej stabilnej próby
+  #           - from: 4.395
+  #             to: 3.58    # PUNKT KWAŚNY: Twoje 4.01 (miernik pokazał 3.58)
+  #     - median:
+  #         window_size: 7
+  #         send_every: 1
+
+# 1. Pobieramy surowe napięcie z ADS (bez filtrów kalibracji tutaj)
   - platform: ads1115
     multiplexer: 'A0_GND'
     ads1115_id: ads_ph
-    gain: 4.096
+    gain: 6.144
+    name: "pH Raw Voltage"
+    id: ph_raw_v
+    update_interval: 5s
+    internal: true # Nie musisz widzieć tego w Home Assistant
+
+  # 2. Główny sensor pH z kompensacją temperatury
+  - platform: template
     name: "pH Akwarium"
     id: ph_akwarium
     unit_of_measurement: "pH"
     accuracy_decimals: 2
     update_interval: 5s
+    lambda: |-
+      float v = id(ph_raw_v).state;
+      float t = id(temp_akwarium).state;
+      
+      if (isnan(v) || isnan(t)) return NAN;
+
+      // TWOJA KALIBRACJA (przeliczona na 25°C):
+      // Używamy punktów, które wypracowaliśmy: 3.654V -> 7.07pH oraz 4.395V -> 3.58pH
+      // Obliczamy "slope" (nachylenie) dla 25°C
+      float slope_25 = (7.07 - 3.58) / (3.654 - 4.395);
+      float intercept = 7.07 - (slope_25 * 3.654);
+
+      // Współczynnik korekcji temp (Równanie Nernsta w uproszczeniu)
+      float t_factor = (t + 273.15) / (25.0 + 273.15);
+      
+      // Wyliczamy pH skorygowane
+      float ph_val = (v * slope_25 * t_factor) + intercept;
+      
+      return ph_val;
     filters:
-      - calibrate_linear:
-          # (napięcie -> wartość pH)
-          - 3.155 -> 6.86
-          - 3.600 -> 4.01
-      - median: # Ten filtr usunie pojedyncze błędy (jak ten Error 263 z logów)
+      - median:
           window_size: 7
-          send_every: 4
-          send_first_at: 1
+          send_every: 1
+
+
+
 
   - platform: dallas_temp
     name: "Temperatura Akwarium"
@@ -286,9 +316,6 @@ sensor:
     update_interval: 10s
     unit_of_measurement: "°C"
     accuracy_decimals: 1
-
-
-
 
   - platform: template
     name: "TDS Akwarium"
