@@ -113,6 +113,8 @@ views:
                 min: 0
                 max: 1000
                 needle: true
+                display_mode: needle
+                show_state: true
                 severity:
                   green: 400
                   yellow: 150
@@ -627,6 +629,175 @@ views:
             grid_options:
               columns: full
         column_span: 4
+      - type: grid
+        cards:
+          - type: heading
+            heading: Nowa sekcja
+          - type: entities
+            title: 🧪 Laboratorium 300L
+            show_header_toggle: false
+            entities:
+              - type: custom:numberbox-card
+                entity: input_number.test_no3
+                name: Azotany (NO3)
+                icon: mdi:flask-outline
+                secondary_info: last_changed
+                map_select: true
+              - type: custom:numberbox-card
+                entity: input_number.test_po4
+                name: Fosforany (PO4)
+                icon: mdi:flask-outline
+                secondary_info: last_changed
+                map_select: true
+              - type: custom:numberbox-card
+                entity: input_number.test_kh
+                name: Twardość (KH)
+                icon: mdi:water-percent
+                secondary_info: last_changed
+                map_select: true
+              - type: custom:numberbox-card
+                entity: input_number.test_gh
+                name: Twardość (GH)
+                icon: mdi:water-opacity
+                secondary_info: last_changed
+                map_select: true
+              - type: custom:numberbox-card
+                entity: input_number.test_k
+                name: Potas (K)
+                icon: mdi:flask-outline
+                secondary_info: last_changed
+                map_select: true
+              - type: custom:numberbox-card
+                entity: input_number.test_fe
+                name: Żelazo (Fe)
+                icon: mdi:flask-outline
+                secondary_info: last_changed
+                map_select: true
+          - type: entities
+            title: 🌊 Serwis Akwarium 300L
+            entities:
+              - entity: input_datetime.ostatnia_podmiana_wody
+                name: Data podmiany
+              - entity: sensor.dni_od_ostatniej_podmiany
+                name: Dni od serwisu
+                icon: mdi:alert-circle-outline
+                style: |
+                  :host {
+                    --paper-item-icon-color: 
+                      {% if states('sensor.dni_od_ostatniej_podmiany') | int >= 7 %}
+                        red
+                      {% else %}
+                        green
+                      {% endif %};
+                  }
+              - type: button
+                name: Zatwierdź podmianę
+                icon: mdi:water-sync
+                action_name: WYKONANO
+                tap_action:
+                  action: call-service
+                  service: script.zatwierdz_podmiane
+      - type: grid
+        cards:
+          - type: heading
+            heading: Nowa sekcja
+          - type: grid
+            columns: 2
+            square: false
+            cards:
+              - type: entity
+                entity: input_number.test_no3
+                name: Azotany (NO3)
+                icon: mdi:flask-outline
+              - type: entity
+                entity: input_number.test_po4
+                name: Fosforany (PO4)
+                icon: mdi:flask-outline
+              - type: entity
+                entity: input_number.test_kh
+                name: Twardość (KH)
+                icon: mdi:water-percent
+              - type: entity
+                entity: input_number.test_gh
+                name: Twardość (GH)
+                icon: mdi:water-opacity
+          - type: entities
+            title: 🌊 Serwis Akwarium 300L
+            show_header_toggle: false
+            entities:
+              - type: section
+                label: Podmiana Wody
+              - entity: input_datetime.ostatnia_podmiana_wody
+                name: Data ostatniej podmiany
+              - type: button
+                name: Zatwierdź podmianę
+                icon: mdi:water-sync
+                action_name: WYKONANO
+                tap_action:
+                  action: call-service
+                  service: script.zatwierdz_podmiane
+              - type: section
+                label: Badania Kropelkowe
+              - entity: input_datetime.ostatni_test_wody
+                name: Ostatnie badanie
+              - type: button
+                name: Zatwierdź wykonanie testów
+                icon: mdi:flask-check
+                action_name: ZAPISZ DATĘ
+                tap_action:
+                  action: call-service
+                  service: script.zatwierdz_testy
+      - type: grid
+        cards:
+          - type: heading
+            heading: Nowa sekcja
+          - type: entities
+            title: 🧪 Laboratorium 300L
+            show_header_toggle: false
+            state_color: true
+            entities:
+              - type: section
+                label: Parametry Azotowe i Fosforowe
+              - entity: input_number.test_no3
+                name: Azotany (NO3)
+                icon: mdi:molecule
+                secondary_info: last-changed
+              - entity: input_number.test_po4
+                name: Fosforany (PO4)
+                icon: mdi:shimmer
+                secondary_info: last-changed
+              - entity: input_number.test_no2
+                name: Azotyny (NO2)
+                icon: mdi:alert-circle-outline
+                secondary_info: last-changed
+              - type: section
+                label: Twardość i Minerały
+              - entity: input_number.test_kh
+                name: Twardość Węglanowa (KH)
+                icon: mdi:water-percent
+                secondary_info: last-changed
+              - entity: input_number.test_gh
+                name: Twardość Ogólna (GH)
+                icon: mdi:water-opacity
+                secondary_info: last-changed
+              - entity: input_number.test_k
+                name: Potas (K)
+                icon: mdi:flask-round-bottom
+                secondary_info: last-changed
+              - entity: input_number.test_fe
+                name: Żelazo (Fe)
+                icon: mdi:leaf
+                secondary_info: last-changed
+      - type: grid
+        cards:
+          - type: heading
+            heading: Nowa sekcja
+          - type: history-graph
+            entities:
+              - entity: sensor.dozownik_nawozow_temperatura_akwarium
+                name: Temperatura [°C]
+            hours_to_show: 72
+            refresh_interval: 60
     background:
       opacity: 33
       alignment: center
@@ -1078,48 +1249,52 @@ views:
               columns: full
           - type: markdown
             content: >-
-              ### 📊 System Nawożenia 300L
+              ### 📊 System Nawożenia 300L (Czyste Sole)
 
-              | Nawóz | Dawka | Tygodniowo | Cel (ppm) |
 
-              | :--- | :---: | :---: | :---: |
+              | Nawóz | Zalecana (dzienna) | Podawana (dzienna) | Tygodniowo
+              (Suma) | Cel (ppm) |
 
-              | **P2: Azot (KNO3)** | {{
+              | :--- | :---: | :---: | :---: | :---: |
+
+              | **P2: Azot (KNO3)** | 2.1 ml | {{
               states('number.dozownik_nawozow_04_dawka_p2_ml') | float(0) }} ml
               | {{ (states('number.dozownik_nawozow_04_dawka_p2_ml') | float(0)
-              * 0.16 * 7) | round(1) }} ppm | 10-20 |
+              * 0.163 * 7) | round(1) }} ppm | 10-20 |
 
-              | **P3: Potas (K2SO4)** | {{
+              | **P3: Potas (K2SO4)** | 2.0 ml | {{
               states('number.dozownik_nawozow_04_dawka_p3_ml') | float(0) }} ml
               | {{ (states('number.dozownik_nawozow_04_dawka_p3_ml') | float(0)
-              * 0.15 * 7) | round(1) }} ppm | 15-25* |
+              * 0.149 * 7) | round(1) }} ppm | 15-25* |
 
-              | **Suma Potasu (K)** | -- | {{
+              | **P4: Magnez (MgSO4)** | 13.0 ml | {{
+              states('number.dozownik_nawozow_04_dawka_p4_ml') | float(0) }} ml
+              | {{ (states('number.dozownik_nawozow_04_dawka_p4_ml') | float(0)
+              * 0.033 * 7) | round(1) }} ppm | 3-10 |
+
+              | **P5: Fosfor (PO4)** | 1.0 ml | {{
+              states('number.dozownik_nawozow_04_dawka_p5_ml') | float(0) }} ml
+              | -- | 1.0 - 1.5 |
+
+              | **Carbo** | 6.0 ml | {{
+              states('number.dozownik_nawozow_04_dawka_carbo_ml') | float(0) }}
+              ml | -- | Węgiel |
+
+              | **Mikro** | 1.0 ml | {{
+              states('number.dozownik_nawozow_04_dawka_mikro_ml') | float(0) }}
+              ml | -- | Mikroelementy |
+
+              | **Suma Potasu (K)** | -- | -- | {{
               ((states('number.dozownik_nawozow_04_dawka_p2_ml') | float(0) *
-              0.10 + states('number.dozownik_nawozow_04_dawka_p3_ml') | float(0)
-              * 0.15) * 7) | round(1) }} ppm | 15-25 |
+              0.103 + states('number.dozownik_nawozow_04_dawka_p3_ml') |
+              float(0) * 0.149) * 7) | round(1) }} ppm | 15-25 |
 
 
               > [!INFO]
 
-              > *Potas (K) jest dostarczany z obu butelek. Tabela automatycznie
-              sumuje stężenie.*
-
-
-              **Status:** {% if
-              (states('number.dozownik_nawozow_04_dawka_p2_ml') | float(0)) > 0
-              %} ✅ Dozowanie Aktywne {% else %} ⚠️ System Wstrzymany {% endif %}
-
-
-              ---
-
-              #### 🧪 Receptura (na 1000ml RO):
-
-              * **P2 (KNO3):** 80g soli + 0.4g E202 + 0.2g E300
-
-              * **P3 (K2SO4):** 100g soli + 0.4g E202 + 0.2g E300
-
-              * **Konserwanty:** Chronią przed pleśnią i bakteriami.
+              > *Rezygnacja z Macro Blue Line na rzecz czystych soli. Zwiększono
+              zalecaną dawkę P3 do 2.0 ml, aby zrekompensować brak potasu z
+              Macro i utrzymać Sumę K w celu.*
             grid_options:
               columns: full
         column_span: 4
@@ -1181,6 +1356,19 @@ views:
         show_icon: true
         entity: sensor.dozownik_nawozow_ph_akwarium
         name: PH
+      - type: entity
+        show_name: true
+        show_state: true
+        show_icon: true
+        entity: input_datetime.ostatnia_podmiana_wody
+        name: Ostatnia podmiana
+        show_entity_picture: false
+      - type: entity
+        show_name: true
+        show_state: true
+        show_icon: true
+        entity: input_datetime.ostatni_test_wody
+        name: Badanie wody
     subview: false
     cards: []
     background:
