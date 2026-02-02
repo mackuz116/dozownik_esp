@@ -83,6 +83,38 @@ logger:
 #                     base_url, id(temp_akwarium).state, id(ph_akwarium).state, id(tds_real).state);
 #             return url;
 
+
+interval:
+  - interval: 5s
+    then:
+      - lambda: |-
+          float current_ph = id(ph_akwarium).state;
+          float setpoint = id(ph_setpoint).state;
+          float hist = id(ph_hysteresis).state;
+
+          // 1. BEZPIECZNIK NADRZĘDNY (Działa zawsze)
+          if (!isnan(current_ph) && current_ph < 5.80) {
+            if (id(co2_solenoid_valve).state) {
+              id(co2_solenoid_valve).turn_off();
+              ESP_LOGW("CO2", "ALARM: pH krytycznie niskie (%.2f)! Odcięto gaz.", current_ph);
+            }
+            return; // Przerwij dalsze sprawdzanie, bezpieczeństwo najważniejsze
+          }
+
+          // 2. LOGIKA AUTOMATU (Tylko jeśli Auto Mode jest ON)
+          if (id(co2_auto_mode).state) {
+            if (isnan(current_ph)) return; // Jeśli sonda nawali, nie zmieniaj stanu
+
+            if (current_ph > (setpoint + hist)) {
+              id(co2_solenoid_valve).turn_on();
+            } else if (current_ph < (setpoint - hist)) {
+              id(co2_solenoid_valve).turn_off();
+            }
+          }
+          // Jeśli Auto Mode jest OFF, sterownik nie robi nic (zostaje sterowanie ręczne)
+
+
+
 time:
   - platform: ds1307
     id: ds_time
@@ -543,17 +575,36 @@ display:
       it.printf(0, 2, "PH:%4.2f  Temp:%4.1fC", 
         id(ph_akwarium).state, id(temp_akwarium).state);
       
-      // Linia 4: TDS i Info o zbiorniku
-      it.printf(0, 3, "TDS:%3.0f ppm", id(tds_real).state);
+      
+      // Linia 4: TDS i status CO2 (Tryb Auto vs Ręczny)
+      if (id(co2_auto_mode).state) {
+        // Jeśli automat jest włączony, pokazuje ON/OFF wg komputera
+        it.printf(0, 3, "TDS:%3.0f CO2:%s (A)", 
+          id(tds_real).state,
+          id(co2_solenoid_valve).state ? "ON " : "OFF");
+      } else {
+        // Jeśli automat jest wyłączony, alarmuje napisem "MANUAL" lub "RECZ"
+        it.printf(0, 3, "TDS:%3.0f CO2:%s (M)", 
+          id(tds_real).state,
+          id(co2_solenoid_valve).state ? "ON " : "OFF");
+      }
+      
+      
+      
+      
+      //it.printf(0, 3, "TDS:%3.0f ppm", id(tds_real).state);
 
+      //it.printf(0, 3, "TDS:%3.0f CO2:%s", 
+      //  id(tds_real).state,
+      //  id(co2_solenoid_valve).state ? "ON " : "OFF");
 
-      it.printf(14, 3, "%c%c%c%c%c%c", 
-        id(p1).remote_values.is_on() ? '1' : '.',
-        id(p2).remote_values.is_on() ? '2' : '.',
-        id(p3).remote_values.is_on() ? '3' : '.',
-        id(p4).remote_values.is_on() ? '4' : '.',
-        id(p5).remote_values.is_on() ? '5' : '.',
-        id(p6).remote_values.is_on() ? '6' : '.');
+      // it.printf(14, 3, "%c%c%c%c%c%c", 
+      //   id(p1).remote_values.is_on() ? '1' : '.',
+      //   id(p2).remote_values.is_on() ? '2' : '.',
+      //   id(p3).remote_values.is_on() ? '3' : '.',
+      //   id(p4).remote_values.is_on() ? '4' : '.',
+      //   id(p5).remote_values.is_on() ? '5' : '.',
+      //   id(p6).remote_values.is_on() ? '6' : '.');
 
 # --- WIZUALIZACJA I SENSORY ---
 text_sensor:
@@ -951,6 +1002,34 @@ number:
     optimistic: true
     restore_value: yes
 
+
+# USTAWIENIA KOMPUTERA PH
+  - platform: template
+    name: "CO2: Docelowe pH (Setpoint)"
+    id: ph_setpoint
+    mode: BOX
+    min_value: 5.0
+    max_value: 8.0
+    step: 0.01
+    initial_value: 6.15
+    optimistic: true
+    restore_value: yes
+
+  - platform: template
+    name: "CO2: Histereza pH"
+    id: ph_hysteresis
+    mode: BOX
+    min_value: 0.01
+    max_value: 0.5
+    step: 0.01
+    initial_value: 0.05
+    optimistic: true
+    restore_value: yes
+
+
+
+
+
 #  PRĘDKOŚCI POMP
   - platform: template
     name: "P1: Prędkość %"
@@ -1314,6 +1393,23 @@ switch:
     id: p6_sun
     optimistic: true
     restore_mode: RESTORE_DEFAULT_OFF
+
+
+  # Dodaj do sekcji switch:
+  - platform: gpio
+    pin: 17
+    name: "Elektrozawór CO2"
+    id: co2_solenoid_valve
+    restore_mode: ALWAYS_OFF
+    icon: "mdi:valve"
+
+  - platform: template
+    name: "CO2: Tryb Automatyczny"
+    id: co2_auto_mode
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+    icon: "mdi:robot"
+
 
 # --- PRZYCISKI (Zaktualizowane o osobne REFILL) ---
 button:
