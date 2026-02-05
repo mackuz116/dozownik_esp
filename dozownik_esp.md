@@ -10,3 +10,36 @@ Pompa 3	    14	              Potas
 Pompa 4	    27	              Carbo
 Pompa 5	    26	              Magnez
 Pompa 6	    25	              Nawóz 6
+CO2         17                sterowanie przekaźnikiem co2
+
+
+
+
+gniazda w obudowie
+TDS 
+  zielony = + (1)
+  pomarańczowy = - (3)
+  zółty = sygnał (2)
+
+PH
+  zielony = + (1)
+  pomarańczowy = - (3)
+  zółty = sygnał (2)
+
+pompy
+  gniazdo 8 pin
+  P1 =  1 czerwny
+        2 czarny  
+  p2 =  3 czerwony
+        4 czarny
+  p3 =  5 czerwony
+        6 czarny
+  p4 =  7 czerwony
+        8 czarny 
+  
+  gniazdo 4 pin
+  p5 =  1 czerwony
+        2 czarny
+  p6 =  3 czerwony
+        4 czarny
+        
