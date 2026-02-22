@@ -13,6 +13,10 @@ views:
             entity: sensor.dozownik_nawozow_temperatura_akwarium
           - type: entity
             entity: sensor.dozownik_nawozow_tds_akwarium
+          - type: button
+            entity: button.dozownik_nawozow_system_wymus_zapis_czasu_do_rtc
+            name: Wymuś Zapis RTC
+            icon: mdi:clock-start
       - type: grid
         cards:
           - type: heading

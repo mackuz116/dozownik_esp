@@ -2,6 +2,27 @@ esphome:
   name: dozownik-nawozow
   friendly_name: "Dozownik V3.1 - WROOM"
 
+  # FIX DLA DS3231: Wymuszenie pracy na baterii
+  on_boot:
+    priority: -100 # POPRAWKA: Uruchom PO inicjalizacji I2C (wcześniej było za wcześnie)
+    then:
+      - delay: 1s # Daj chwilę na ustabilizowanie napięć
+      - lambda: |-
+          // Diagnostyka przed naprawą
+          uint8_t status = 0;
+          id(ds_time).read_byte(0x0F, &status);
+          if (status >> 7) { ESP_LOGE("RTC_DIAG", "Wykryto zanik zasilania RTC! (OSF Flag set). Status: 0x%02X", status); }
+          else { ESP_LOGI("RTC_DIAG", "RTC trzyma zasilanie poprawnie. Status: 0x%02X", status); }
+
+          // Rejestr 0x0E w DS3231 steruje zasilaniem. Wpisanie 0x00 włącza oscylator na baterii (EOSC=0).
+          // Rejestr 0x0F (Status) - zerujemy flagę OSF (Oscillator Stop Flag)
+          id(ds_time).write_byte(0x0E, 0x00);
+          id(ds_time).write_byte(0x0F, 0x00);
+          ESP_LOGI("DS3231_FIX", "Wymuszono włączenie podtrzymania bateryjnego (Reg 0x0E=0, 0x0F=0)");
+          
+          // WYMUSZENIE ODCZYTU CZASU: Po naprawie rejestrów, każemy ESP od razu pobrać godzinę
+          id(ds_time).update();
+
 esp32:
   board: esp32dev
   framework:
@@ -17,6 +38,26 @@ http_request:
 
 preferences:
   flash_write_interval: 1min  # Wyłączamy auto-zapis (używamy Twojego sync)
+
+globals:
+  - id: menu_active
+    type: bool
+    initial_value: 'false'
+  - id: menu_selection
+    type: int
+    initial_value: '1'
+  - id: menu_last_activity
+    type: int
+    initial_value: '0'
+  - id: manual_continuous_active
+    type: bool
+    initial_value: 'false'
+  - id: manual_dose_start_time
+    type: int
+    initial_value: '0'
+  - id: ignore_next_click
+    type: bool
+    initial_value: 'false'
 
 wifi:
   ssid: !secret wifi_ssid
@@ -40,7 +81,7 @@ i2c:
   sda: 21
   scl: 22
   scan: true
-  frequency: 400kHz
+  frequency: 50kHz # Zmniejszamy prędkość dla stabilności RTC
 
 
 # ads1115:
@@ -84,45 +125,167 @@ logger:
 #             return url;
 
 
+
 interval:
-  - interval: 5s
+  - interval: 1s
     then:
       - lambda: |-
+          // --- SEKCJA A: MENU TIMEOUT (Musi być na górze!) ---
+          if (id(menu_active)) {
+            // POPRAWKA: Jeśli trwa dozowanie ręczne (trzymamy przycisk), resetujemy licznik czasu, aby nie wyjść z menu
+            if (id(manual_continuous_active)) {
+              id(menu_last_activity) = millis();
+            }
+
+            uint32_t diff = millis() - id(menu_last_activity);
+            if (diff > 10000) { // 10 sekund
+              id(menu_active) = false;
+              id(manual_continuous_active) = false;
+              // ZABEZPIECZENIE: Wymuszone zatrzymanie wszystkich pomp przy wyjściu z menu
+              id(p1).turn_off().perform();
+              id(p2).turn_off().perform();
+              id(p3).turn_off().perform();
+              id(p4).turn_off().perform();
+              id(p5).turn_off().perform();
+              id(p6).turn_off().perform();
+              
+              id(menu_selection) = 1;
+              id(my_display).update();
+              ESP_LOGI("MENU", "Timeout - powrót do ekranu głównego");
+            }
+          }
+
+  # --- WIZUALIZACJA LED I LOGIKA PH ---
+  - interval: 2s # Częstotliwość odświeżania wizualizacji i logiki pH
+    then:
+      - lambda: |-
+          // Funkcja pomocnicza do mapowania wartości
+          auto map_value = [](float x, float in_min, float in_max, float out_min, float out_max) -> float {
+            return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+          };
+
+          // Pobieramy wskaźnik do sterowania poszczególnymi diodami
+          esphome::light::AddressableLight *leds = (esphome::light::AddressableLight *) id(led_strip_physical).get_output();
+
+          // --- WIZUALIZACJA TEMPERATURY (Linia 1, LEDy 0-7) ---
+          float temp = id(temp_akwarium).state;
+          if (!isnan(temp)) {
+            int leds_on = map_value(temp, 20.0, 28.0, 1, 8);
+            leds_on = clamp(leds_on, 0, 8);
+            Color color;
+            if (temp <= 24.0) {
+              // Gradient od Niebieskiego (przy 20°C) do Zielonego (przy 24°C)
+              uint8_t green = clamp((int)map_value(temp, 20.0, 24.0, 0, 255), 0, 255);
+              uint8_t blue = clamp((int)map_value(temp, 20.0, 24.0, 255, 0), 0, 255);
+              color = Color(0, green, blue);
+            } else {
+              // Gradient od Zielonego (przy 24°C) do Czerwonego (przy 28°C)
+              uint8_t red = clamp((int)map_value(temp, 24.0, 28.0, 0, 255), 0, 255);
+              uint8_t green = clamp((int)map_value(temp, 24.0, 28.0, 255, 0), 0, 255);
+              color = Color(red, green, 0);
+            }
+            for (int i = 0; i < 8; i++) {
+              if (i < leds_on) (*leds)[i] = color;
+              else (*leds)[i] = Color::BLACK;
+            }
+          } else {
+            for (int i = 0; i < 8; i++) { (*leds)[i] = Color(50,0,0); }
+          }
+
+          // --- WIZUALIZACJA pH (Linia 2, LEDy 8-14) ---
+          // --- WIZUALIZACJA TDS (Linia 2, LEDy 8-10) ---
+          float tds = id(tds_real).state;
+          if (!isnan(tds)) {
+            // 3 diody dla TDS (8, 9, 10)
+            // Zakresy: <120 (miękka/niebieski), 120-240 (średnia/zielony), >240 (twarda/czerwony)
+            int tds_level = 0;
+            Color tds_color = Color::BLACK;
+            
+            if (tds > 10) { tds_level = 1; tds_color = Color(0, 0, 255); } // Niebieski
+            if (tds > 120) { tds_level = 2; tds_color = Color(0, 255, 0); } // Zielony
+            if (tds > 240) { tds_level = 3; tds_color = Color(255, 0, 0); } // Czerwony
+
+            for (int i = 0; i < 3; i++) {
+              if (i < tds_level) (*leds)[8 + i] = tds_color;
+              else (*leds)[8 + i] = Color::BLACK;
+            }
+          } else {
+            for (int i = 8; i <= 10; i++) { (*leds)[i] = Color(20, 0, 0); } // Błąd TDS
+          }
+
+          // --- WIZUALIZACJA pH (Linia 2, LEDy 11-13) ---
+          float ph = id(ph_akwarium).state;
+          if (!isnan(ph)) {
+            // Mapujemy pH 6.0-7.6 na 3 diody (11, 12, 13)
+            int led_index = map_value(ph, 6.0, 7.6, 11, 13);
+            led_index = clamp(led_index, 11, 13);
+            
+            for (int i = 11; i <= 13; i++) { (*leds)[i] = Color::BLACK; }
+            
+            Color ph_color;
+            if (ph < 6.5) ph_color = Color(255, 255, 0); // Żółty
+            else if (ph > 7.2) ph_color = Color(0, 0, 255); // Niebieski
+            else ph_color = Color(0, 255, 0); // Zielony
+            (*leds)[led_index] = ph_color;
+          } else {
+            for (int i = 11; i <= 13; i++) { (*leds)[i] = Color(20, 0, 0); } // Błąd pH
+          }
+
+          // --- STATUS WIFI (Dioda 7 w linii 2 -> LED 14) ---
+          if (wifi::global_wifi_component->is_connected()) {
+             long rssi = wifi::global_wifi_component->wifi_rssi();
+             // Skala sygnału: >-60 (Mocny), >-80 (Średni), <-80 (Słaby)
+             if (rssi >= -60) (*leds)[14] = Color(0, 255, 0); // Zielony
+             else if (rssi >= -80) (*leds)[14] = Color(255, 255, 0); // Żółty
+             else (*leds)[14] = Color(255, 0, 0); // Czerwony
+          } else {
+             // Brak WiFi - mruganie na czerwono
+             if ((millis() / 500) % 2 == 0) (*leds)[14] = Color(255, 0, 0);
+             else (*leds)[14] = Color::BLACK;
+          }
+
+          // --- STATUS CO2 (Dioda 8 w linii 2 -> LED 15) ---
+          if (id(co2_solenoid_valve).state) {
+            (*leds)[15] = Color(0, 100, 0); // Zielony
+          } else {
+            (*leds)[15] = Color(30, 30, 30); // Szary/Biały
+          }
+
+          leds->schedule_show();
+
+          // --- LOGIKA PH (przeniesiona tutaj, aby działała co 2s) ---
           float current_ph = id(ph_akwarium).state;
           float setpoint = id(ph_setpoint).state;
           float hist = id(ph_hysteresis).state;
 
-          // 1. BEZPIECZNIK NADRZĘDNY (Działa zawsze)
           if (!isnan(current_ph) && current_ph < 5.80) {
             if (id(co2_solenoid_valve).state) {
               id(co2_solenoid_valve).turn_off();
               ESP_LOGW("CO2", "ALARM: pH krytycznie niskie (%.2f)! Odcięto gaz.", current_ph);
             }
-            return; // Przerwij dalsze sprawdzanie, bezpieczeństwo najważniejsze
-          }
-
-          // 2. LOGIKA AUTOMATU (Tylko jeśli Auto Mode jest ON)
-          if (id(co2_auto_mode).state) {
-            if (isnan(current_ph)) return; // Jeśli sonda nawali, nie zmieniaj stanu
-
+          } else if (id(co2_auto_mode).state && !isnan(current_ph)) {
             if (current_ph > (setpoint + hist)) {
               id(co2_solenoid_valve).turn_on();
             } else if (current_ph < (setpoint - hist)) {
               id(co2_solenoid_valve).turn_off();
             }
           }
-          // Jeśli Auto Mode jest OFF, sterownik nie robi nic (zostaje sterowanie ręczne)
 
-
+  # --- DIAGNOSTYKA RTC (Co 10s) ---
+  - interval: 10s
+    then:
+      - lambda: |-
+          uint8_t status = 0;
+          id(ds_time).read_byte(0x0F, &status);
+          // Jeśli bit 7 (0x80) jest ustawiony, oznacza to, że oscylator stanął (brak baterii)
+          id(rtc_battery_status).publish_state(status & 0x80);
 
 time:
   - platform: ds1307
     id: ds_time
+    address: 0x68
     timezone: "Europe/Warsaw"
-    update_interval: 1min
-    on_time_sync:
-      then:
-        - logger.log: "Synchronizacja czasu RTC z NTP zakończona sukcesem"
+    update_interval: 15s # Bardzo częsta aktualizacja, aby szybko łapać czas po starcie
     on_time:
       - seconds: 0
         then:
@@ -257,7 +420,9 @@ time:
     timezone: "Europe/Warsaw"
     on_time_sync:
       then:
-        - ds1307.write_time: # Ta linia zapisuje czas z internetu do Twojej bateryjnej kostki
+        - ds1307.write_time:
+            id: ds_time
+        - logger.log: "SUCCESS: Czas z internetu (sntp_time) został zapisany w module RTC (ds_time)."
 
 
 sensor:
@@ -370,9 +535,69 @@ sensor:
       return ppm;
     update_interval: 5s
 
+  - platform: rotary_encoder
+    name: "Pokrętło Menu"
+    id: menu_encoder
+    pin_a:
+      number: 32
+      mode: INPUT_PULLUP
+    pin_b:
+      number: 33
+      mode: INPUT_PULLUP
+    min_value: 1
+    max_value: 6
+    resolution: 1
+    filters:
+      - debounce: 50ms # Kluczowe przy zakłóceniach od silników pomp
+    on_value:
+      then:
+        - lambda: |-
+            id(menu_active) = true;
+            id(menu_last_activity) = millis();
+            id(menu_selection) = (int)x;
+        - component.update: my_display
+
        
 # --- SKRYPTY DAWKOWANIA Z REGULACJĄ PRĘDKOŚCI I SOFT-STARTEM ---
 script:
+  - id: script_manual_hold_start
+    then:
+      - delay: 500ms
+      - lambda: |-
+          // ZABEZPIECZENIE: Przed startem ręcznym upewnij się, że inne pompy stoją
+          id(p1).turn_off().perform();
+          id(p2).turn_off().perform();
+          id(p3).turn_off().perform();
+          id(p4).turn_off().perform();
+          id(p5).turn_off().perform();
+          id(p6).turn_off().perform();
+
+          id(manual_continuous_active) = true;
+          id(manual_dose_start_time) = millis();
+          int pump = id(menu_selection);
+          float speed = 1.0;
+          
+          if (pump == 1) { speed = id(p1_speed).state / 100.0; auto call = id(p1).turn_on(); call.set_brightness(speed); call.perform(); }
+          else if (pump == 2) { speed = id(p2_speed).state / 100.0; auto call = id(p2).turn_on(); call.set_brightness(speed); call.perform(); }
+          else if (pump == 3) { speed = id(p3_speed).state / 100.0; auto call = id(p3).turn_on(); call.set_brightness(speed); call.perform(); }
+          else if (pump == 4) { speed = id(p4_speed).state / 100.0; auto call = id(p4).turn_on(); call.set_brightness(speed); call.perform(); }
+          else if (pump == 5) { speed = id(p5_speed).state / 100.0; auto call = id(p5).turn_on(); call.set_brightness(speed); call.perform(); }
+          else if (pump == 6) { speed = id(p6_speed).state / 100.0; auto call = id(p6).turn_on(); call.set_brightness(speed); call.perform(); }
+          
+          id(my_display).update();
+
+  - id: script_manual_run
+    then:
+      - lambda: |-
+          int pump = id(menu_selection);
+          if (pump == 1) id(script_p1).execute();
+          if (pump == 2) id(script_p2).execute();
+          if (pump == 3) id(script_p3).execute();
+          if (pump == 4) id(script_p4).execute();
+          if (pump == 5) id(script_p5).execute();
+          if (pump == 6) id(script_p6).execute();
+          id(menu_last_activity) = millis();
+
   - id: script_p1
     mode: queued
     then:
@@ -544,9 +769,59 @@ display:
     dimensions: 20x4
     address: 0x27
     id: my_display
+    update_interval: 1s
     lambda: |-
+      if (id(menu_active)) {
+        if (id(manual_continuous_active)) {
+           it.print(0, 0, "!!! DOZOWANIE !!!");
+           it.printf(0, 1, "Pompa P%d", id(menu_selection));
+           
+           long duration = millis() - id(manual_dose_start_time);
+           float calib = 1.0;
+           int pump = id(menu_selection);
+           if (pump == 1) calib = id(c1).state;
+           else if (pump == 2) calib = id(c2).state;
+           else if (pump == 3) calib = id(c3).state;
+           else if (pump == 4) calib = id(c4).state;
+           else if (pump == 5) calib = id(c5).state;
+           else if (pump == 6) calib = id(c6).state;
+           
+           if (calib < 0.1) calib = 1.0;
+           float ml = (duration / 1000.0) / calib;
+           
+           it.printf(0, 2, "Ilosc: %.1f ml", ml);
+           it.print(0, 3, "Pusc aby zatrzymac");
+           return;
+        }
+
+        it.print(0, 0, "TRYB RECZNY (MANUAL)");
+        int sel = id(menu_selection);
+        it.printf(0, 1, "Wybor: POMPA P%d", sel);
+        
+        if (sel == 1) it.print(0, 2, "Mikro");
+        else if (sel == 2) it.print(0, 2, "KNO3 (Azot)");
+        else if (sel == 3) it.print(0, 2, "K2SO4 (Potas)");
+        else if (sel == 4) it.print(0, 2, "Carbo");
+        else if (sel == 5) it.print(0, 2, "MgSO4 (Magnez)");
+        else if (sel == 6) it.print(0, 2, "Makro");
+        
+        it.print(0, 3, "Kliknij aby dozowac");
+        return;
+      }
+
       // Linia 1: Data i Godzina (20 znaków)
-      it.strftime(0, 0, "%d.%m.%Y  %H:%M:%S", id(ds_time).now());
+      auto rtc_time = id(ds_time).now();
+      auto net_time = id(sntp_time).now();
+
+      if (rtc_time.year >= 2020) {
+         it.strftime(0, 0, "%d.%m.%Y  %H:%M:%S", rtc_time);
+      } else if (net_time.is_valid() && net_time.year >= 2020) {
+         it.strftime(0, 0, "%d.%m.%Y *%H:%M:%S", net_time); // * oznacza czas z WiFi (awaria RTC)
+      } else if (millis() < 10000) {
+         it.print(0, 0, "Inicjalizacja RTC..."); // Przez pierwsze 10s nie strasz błędem
+      } else {
+         it.print(0, 0, "BLAD BATERII RTC!   ");
+      }
       
       // Linia 2: Rotacja butelek (z funkcją MX dla 100%)
       if ((millis() % 10000) < 5000) {
@@ -577,20 +852,44 @@ display:
       
       
       // Linia 4: TDS i status CO2 (Tryb Auto vs Ręczny)
-      if (id(co2_auto_mode).state) {
+      //if (id(co2_auto_mode).state) {
         // Jeśli automat jest włączony, pokazuje ON/OFF wg komputera
-        it.printf(0, 3, "TDS:%3.0f CO2:%s (A)", 
-          id(tds_real).state,
-          id(co2_solenoid_valve).state ? "ON " : "OFF");
-      } else {
+        //it.printf(0, 3, "TDS:%3.0f CO2:%s (A)", 
+        //  id(tds_real).state,
+        //  id(co2_solenoid_valve).state ? "ON " : "OFF");
+      //} else {
         // Jeśli automat jest wyłączony, alarmuje napisem "MANUAL" lub "RECZ"
-        it.printf(0, 3, "TDS:%3.0f CO2:%s (M)", 
-          id(tds_real).state,
-          id(co2_solenoid_valve).state ? "ON " : "OFF");
+        //it.printf(0, 3, "TDS:%3.0f CO2:%s (M)", 
+          //id(tds_real).state,
+          //id(co2_solenoid_valve).state ? "ON " : "OFF");
+      //}
+      
+      
+      // Linia 4: TDS i status CO2 LUB status dozowania
+      if (id(p1).remote_values.is_on())      { it.print(0, 3, ">>> POMPA 1: ON <<<"); }
+      else if (id(p2).remote_values.is_on()) { it.print(0, 3, ">>> POMPA 2: ON <<<"); }
+      else if (id(p3).remote_values.is_on()) { it.print(0, 3, ">>> POMPA 3: ON <<<"); }
+      else if (id(p4).remote_values.is_on()) { it.print(0, 3, ">>> POMPA 4: ON <<<"); }
+      else if (id(p5).remote_values.is_on()) { it.print(0, 3, ">>> POMPA 5: ON <<<"); }
+      else if (id(p6).remote_values.is_on()) { it.print(0, 3, ">>> POMPA 6: ON <<<"); }
+      else {
+        // Standardowy widok, gdy żadna pompa nie pracuje
+        if (id(co2_auto_mode).state) {
+          it.printf(0, 3, "TDS:%3.0f CO2:%s (A)", 
+            id(tds_real).state,
+            id(co2_solenoid_valve).state ? "ON " : "OFF");
+        } else {
+          it.printf(0, 3, "TDS:%3.0f CO2:%s (M)", 
+            id(tds_real).state,
+            id(co2_solenoid_valve).state ? "ON " : "OFF");
+        }
       }
-      
-      
-      
+
+
+
+
+
+
       
       //it.printf(0, 3, "TDS:%3.0f ppm", id(tds_real).state);
 
@@ -1544,6 +1843,22 @@ button:
       - delay: 10s
       - light.turn_off: p6
 
+  # DIAGNOSTYKA RTC - Przycisk do ręcznego zapisu czasu z internetu do kostki
+  - platform: template
+    name: "SYSTEM: Wymuś zapis czasu do RTC"
+    on_press:
+      - ds1307.write_time:
+          id: ds_time
+
+  # NOWY PRZYCISK: Ręczna naprawa ustawień baterii (gdyby automat zawiódł)
+  - platform: template
+    name: "SYSTEM: Napraw Baterię RTC (Rejestry)"
+    on_press:
+      - lambda: |-
+          id(ds_time).write_byte(0x0E, 0x00); // Enable Oscillator
+          id(ds_time).write_byte(0x0F, 0x00); // Clear OSF flag
+          ESP_LOGI("DS3231_MANUAL", "Ręcznie zapisano rejestry 0x0E i 0x0F na 0x00");
+
 # --- WYJŚCIA FIZYCZNE ---
 output:
   - platform: ledc
@@ -1553,9 +1868,6 @@ output:
     pin: 16
     id: out_p2
   - platform: ledc
-    pin: 14
-    id: out_p3
-  - platform: ledc
     pin: 27
     id: out_p4
   - platform: ledc
@@ -1564,6 +1876,10 @@ output:
   - platform: ledc
     pin: 25
     id: out_p6
+  # POPRAWKA: Przeniesienie P3 na bezpieczny pin GPIO19 (18 zajęte na LEDy)
+  - platform: ledc
+    pin: 19
+    id: out_p3
 
 light:
   - platform: monochromatic
@@ -1596,3 +1912,119 @@ light:
     name: "Pompa 6"
     id: p6
     default_transition_length: 1s
+
+  # --- PASEK LED WS2812b (Pixel) na PIN 18 ---
+  # 1. Fizyczna konfiguracja całego łańcucha (16 diod razem)
+  - platform: esp32_rmt_led_strip
+    rgb_order: GRB
+    chipset: WS2812
+    pin: 18
+    num_leds: 16
+    name: "LED Fizyczny"
+    id: led_strip_physical
+    internal: true # Ukrywamy ten byt, sterujemy logicznymi liniami poniżej
+
+  # 2. Logiczna Linia 1 (Diody 1-8)
+  - platform: partition
+    name: "LED Linia 1"
+    id: led_line_1
+    segments:
+      - id: led_strip_physical
+        from: 0
+        to: 7
+    effects: &led_effects
+      - addressable_rainbow:
+          name: Rainbow
+      - pulse:
+      - strobe:
+
+  # 3. Logiczna Linia 2 (Diody 9-16)
+  - platform: partition
+    name: "LED Linia 2"
+    id: led_line_2
+    segments:
+      - id: led_strip_physical
+        from: 8
+        to: 15
+    effects: *led_effects
+
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: 23
+      mode: INPUT_PULLUP
+      inverted: true
+    name: "Przycisk Menu"
+    id: menu_button
+    filters:
+      - delayed_on: 50ms
+    on_press:
+      then:
+        - if:
+            condition:
+              lambda: "return id(menu_active);"
+            then:
+              - script.execute: script_manual_hold_start
+            else:
+              - lambda: |-
+                  id(menu_active) = true;
+                  id(menu_last_activity) = millis();
+                  id(ignore_next_click) = true;
+                  id(my_display).update();
+    on_release:
+      then:
+        - if:
+            condition:
+              lambda: "return id(ignore_next_click);"
+            then:
+              - lambda: "id(ignore_next_click) = false;"
+            else:
+              - if:
+                  condition:
+                    lambda: "return id(menu_active);"
+                  then:
+                    - if:
+                        condition:
+                          lambda: "return id(manual_continuous_active);"
+                        then:
+                          - lambda: |-
+                              int pump = id(menu_selection);
+                              if (pump == 1) id(p1).turn_off().perform();
+                              else if (pump == 2) id(p2).turn_off().perform();
+                              else if (pump == 3) id(p3).turn_off().perform();
+                              else if (pump == 4) id(p4).turn_off().perform();
+                              else if (pump == 5) id(p5).turn_off().perform();
+                              else if (pump == 6) id(p6).turn_off().perform();
+
+                              long duration = millis() - id(manual_dose_start_time);
+                              float calib = 1.0;
+                              if (pump == 1) calib = id(c1).state;
+                              else if (pump == 2) calib = id(c2).state;
+                              else if (pump == 3) calib = id(c3).state;
+                              else if (pump == 4) calib = id(c4).state;
+                              else if (pump == 5) calib = id(c5).state;
+                              else if (pump == 6) calib = id(c6).state;
+                              
+                              if (calib < 0.1) calib = 1.0;
+                              float ml = (duration / 1000.0) / calib;
+                              
+                              if (pump == 1) id(p1_level).publish_state(max(0.0f, id(p1_level).state - ml));
+                              else if (pump == 2) id(p2_level).publish_state(max(0.0f, id(p2_level).state - ml));
+                              else if (pump == 3) id(p3_level).publish_state(max(0.0f, id(p3_level).state - ml));
+                              else if (pump == 4) id(p4_level).publish_state(max(0.0f, id(p4_level).state - ml));
+                              else if (pump == 5) id(p5_level).publish_state(max(0.0f, id(p5_level).state - ml));
+                              else if (pump == 6) id(p6_level).publish_state(max(0.0f, id(p6_level).state - ml));
+                              
+                              global_preferences->sync();
+                              id(manual_continuous_active) = false;
+                              id(menu_last_activity) = millis();
+                              id(my_display).update();
+                        else:
+                          - script.stop: script_manual_hold_start
+                          - script.execute: script_manual_run
+
+  # DIAGNOSTYKA: Czy zegar zgubił zasilanie? (Czyta flagę OSF z rejestru 0x0F)
+  - platform: template
+    name: "SYSTEM: Status Baterii RTC"
+    id: rtc_battery_status
+    device_class: problem
