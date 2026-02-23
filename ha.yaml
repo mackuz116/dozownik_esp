@@ -821,6 +821,43 @@ views:
               - type: divider
               - entity: button.dozownik_nawozow_d_podmiana_uruchom_wyrownanie_p1_p6
                 name: PODAJ WSZYSTKO TERAZ
+          - type: custom:numberbox-card
+            border: true
+            entity: number.dozownik_nawozow_co2_start_godzina_manual
+            name: Start
+            icon: mdi:clock-time-eleven
+            min: 0
+            max: 12
+            step: 1
+          - type: vertical-stack
+            cards:
+              - type: entities
+                title: Dozowanie CO2
+                show_header_toggle: false
+                entities:
+                  - entity: number.dozownik_nawozow_co2_docelowe_ph_setpoint
+                    name: Docelowe PH
+                  - entity: number.dozownik_nawozow_co2_histereza_ph
+                    name: Histereza PH
+                  - entity: switch.dozownik_nawozow_co2_tryb_automatyczny
+                    name: Tryb automatyczny PH
+                  - entity: switch.dozownik_nawozow_elektrozawor_co2
+              - type: grid
+                columns: 2
+                square: false
+                cards:
+                  - type: custom:numberbox-card
+                    entity: number.dozownik_nawozow_co2_start_godzina_manual
+                    name: Start Godz.
+                  - type: custom:numberbox-card
+                    entity: number.dozownik_nawozow_co2_start_minuta_manual
+                    name: Start Min.
+                  - type: custom:numberbox-card
+                    entity: number.dozownik_nawozow_co2_stop_godzina_manual
+                    name: Stop Godz.
+                  - type: custom:numberbox-card
+                    entity: number.dozownik_nawozow_co2_stop_minuta_manual
+                    name: Stop Min.
       - type: grid
         cards:
           - type: heading
@@ -920,6 +957,49 @@ views:
             entity: button.dozownik_nawozow_system_wymus_zapis_czasu_do_rtc
             grid_options:
               columns: full
+          - type: entities
+            entities:
+              - entity: number.dozownik_nawozow_co2_docelowe_ph_setpoint
+                name: Docelowe PH
+              - entity: number.dozownik_nawozow_co2_histereza_ph
+                name: Histereza PH
+              - entity: switch.dozownik_nawozow_co2_tryb_automatyczny
+                name: CO2 Ttyb automatyczny PH
+              - entity: number.dozownik_nawozow_co2_start_godzina_manual
+                name: Godzina startu
+              - entity: number.dozownik_nawozow_co2_start_minuta_manual
+                name: Minuta startu
+              - entity: number.dozownik_nawozow_co2_stop_godzina_manual
+                name: Godzina stopu
+              - entity: number.dozownik_nawozow_co2_stop_minuta_manual
+                name: Minuta stopu
+            title: Dozowanie CO2
+            show_header_toggle: false
+          - type: entities
+            title: Dozowanie CO2
+            entities:
+              - entity: switch.dozownik_nawozow_co2_tryb_automatyczny
+                name: Tryb Auto
+              - type: custom:multiple-entity-row
+                entity: number.dozownik_nawozow_co2_start_godzina_manual
+                name: Start Gazowania
+                show_state: false
+                entities:
+                  - entity: number.dozownik_nawozow_co2_start_godzina_manual
+                    name: H
+                  - entity: number.dozownik_nawozow_co2_start_minuta_manual
+                    name: M
+              - type: custom:multiple-entity-row
+                entity: number.dozownik_nawozow_co2_stop_godzina_manual
+                name: Stop Gazowania
+                show_state: false
+                entities:
+                  - entity: number.dozownik_nawozow_co2_stop_godzina_manual
+                    name: H
+                  - entity: number.dozownik_nawozow_co2_stop_minuta_manual
+                    name: M
+              - entity: switch.dozownik_nawozow_elektrozawor_co2
+                name: Zawór
       - type: grid
         cards:
           - type: heading
