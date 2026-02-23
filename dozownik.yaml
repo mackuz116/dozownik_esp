@@ -253,20 +253,45 @@ interval:
 
           leds->schedule_show();
 
-          // --- LOGIKA PH (przeniesiona tutaj, aby działała co 2s) ---
+          // --- LOGIKA CO2 (Scalona i poprawiona) ---
           float current_ph = id(ph_akwarium).state;
           float setpoint = id(ph_setpoint).state;
           float hist = id(ph_hysteresis).state;
+          auto now = id(ds_time).now();
 
+          // 1. ZABEZPIECZENIE KRYTYCZNE (Działa zawsze)
           if (!isnan(current_ph) && current_ph < 5.80) {
             if (id(co2_solenoid_valve).state) {
               id(co2_solenoid_valve).turn_off();
               ESP_LOGW("CO2", "ALARM: pH krytycznie niskie (%.2f)! Odcięto gaz.", current_ph);
             }
-          } else if (id(co2_auto_mode).state && !isnan(current_ph)) {
-            if (current_ph > (setpoint + hist)) {
+          } 
+          // 2. TRYB AUTO (Sterowanie wg pH)
+          else if (id(co2_auto_mode).state) {
+            if (!isnan(current_ph)) {
+              if (current_ph > (setpoint + hist)) {
+                id(co2_solenoid_valve).turn_on();
+              } else if (current_ph < (setpoint - hist)) {
+                id(co2_solenoid_valve).turn_off();
+              }
+            }
+          } 
+          // 3. TRYB RĘCZNY (Sterowanie wg Godzin)
+          else {
+            int current_min = now.hour * 60 + now.minute;
+            int start_min = (int)id(co2_start_h).state * 60 + (int)id(co2_start_m).state;
+            int stop_min = (int)id(co2_stop_h).state * 60 + (int)id(co2_stop_m).state;
+
+            bool should_be_on = false;
+            if (start_min < stop_min) { // np. 08:30 - 16:15
+              should_be_on = (current_min >= start_min && current_min < stop_min);
+            } else { // np. 22:00 - 06:00 (przez północ)
+              should_be_on = (current_min >= start_min || current_min < stop_min);
+            }
+
+            if (should_be_on) {
               id(co2_solenoid_valve).turn_on();
-            } else if (current_ph < (setpoint - hist)) {
+            } else {
               id(co2_solenoid_valve).turn_off();
             }
           }
@@ -299,13 +324,13 @@ time:
                   if (!((now.hour == h && now.minute == m) && (h != 0 || m != 0))) return false;
                   
                   int dow = now.day_of_week; 
-                  if (dow == 1) return id(p1_mon).state;
-                  if (dow == 2) return id(p1_tue).state;
-                  if (dow == 3) return id(p1_wed).state;
-                  if (dow == 4) return id(p1_thu).state;
-                  if (dow == 5) return id(p1_fri).state;
-                  if (dow == 6) return id(p1_sat).state;
-                  if (dow == 7) return id(p1_sun).state;
+                  if (dow == 2) return id(p1_mon).state;
+                  if (dow == 3) return id(p1_tue).state;
+                  if (dow == 4) return id(p1_wed).state;
+                  if (dow == 5) return id(p1_thu).state;
+                  if (dow == 6) return id(p1_fri).state;
+                  if (dow == 7) return id(p1_sat).state;
+                  if (dow == 1) return id(p1_sun).state;
                   return false;
               then:
                 - script.execute: script_p1
@@ -320,13 +345,13 @@ time:
                   if (!((now.hour == h && now.minute == m) && (h != 0 || m != 0))) return false;
 
                   int dow = now.day_of_week;
-                  if (dow == 1) return id(p2_mon).state;
-                  if (dow == 2) return id(p2_tue).state;
-                  if (dow == 3) return id(p2_wed).state;
-                  if (dow == 4) return id(p2_thu).state;
-                  if (dow == 5) return id(p2_fri).state;
-                  if (dow == 6) return id(p2_sat).state;
-                  if (dow == 7) return id(p2_sun).state;
+                  if (dow == 2) return id(p2_mon).state;
+                  if (dow == 3) return id(p2_tue).state;
+                  if (dow == 4) return id(p2_wed).state;
+                  if (dow == 5) return id(p2_thu).state;
+                  if (dow == 6) return id(p2_fri).state;
+                  if (dow == 7) return id(p2_sat).state;
+                  if (dow == 1) return id(p2_sun).state;
                   return false;
               then:
                 - script.execute: script_p2
@@ -341,13 +366,13 @@ time:
                   if (!((now.hour == h && now.minute == m) && (h != 0 || m != 0))) return false;
 
                   int dow = now.day_of_week;
-                  if (dow == 1) return id(p3_mon).state;
-                  if (dow == 2) return id(p3_tue).state;
-                  if (dow == 3) return id(p3_wed).state;
-                  if (dow == 4) return id(p3_thu).state;
-                  if (dow == 5) return id(p3_fri).state;
-                  if (dow == 6) return id(p3_sat).state;
-                  if (dow == 7) return id(p3_sun).state;
+                  if (dow == 2) return id(p3_mon).state;
+                  if (dow == 3) return id(p3_tue).state;
+                  if (dow == 4) return id(p3_wed).state;
+                  if (dow == 5) return id(p3_thu).state;
+                  if (dow == 6) return id(p3_fri).state;
+                  if (dow == 7) return id(p3_sat).state;
+                  if (dow == 1) return id(p3_sun).state;
                   return false;
               then:
                 - script.execute: script_p3
@@ -362,13 +387,13 @@ time:
                   if (!((now.hour == h && now.minute == m) && (h != 0 || m != 0))) return false;
 
                   int dow = now.day_of_week;
-                  if (dow == 1) return id(p4_mon).state;
-                  if (dow == 2) return id(p4_tue).state;
-                  if (dow == 3) return id(p4_wed).state;
-                  if (dow == 4) return id(p4_thu).state;
-                  if (dow == 5) return id(p4_fri).state;
-                  if (dow == 6) return id(p4_sat).state;
-                  if (dow == 7) return id(p4_sun).state;
+                  if (dow == 2) return id(p4_mon).state;
+                  if (dow == 3) return id(p4_tue).state;
+                  if (dow == 4) return id(p4_wed).state;
+                  if (dow == 5) return id(p4_thu).state;
+                  if (dow == 6) return id(p4_fri).state;
+                  if (dow == 7) return id(p4_sat).state;
+                  if (dow == 1) return id(p4_sun).state;
                   return false;
               then:
                 - script.execute: script_p4
@@ -383,13 +408,13 @@ time:
                   if (!((now.hour == h && now.minute == m) && (h != 0 || m != 0))) return false;
 
                   int dow = now.day_of_week;
-                  if (dow == 1) return id(p5_mon).state;
-                  if (dow == 2) return id(p5_tue).state;
-                  if (dow == 3) return id(p5_wed).state;
-                  if (dow == 4) return id(p5_thu).state;
-                  if (dow == 5) return id(p5_fri).state;
-                  if (dow == 6) return id(p5_sat).state;
-                  if (dow == 7) return id(p5_sun).state;
+                  if (dow == 2) return id(p5_mon).state;
+                  if (dow == 3) return id(p5_tue).state;
+                  if (dow == 4) return id(p5_wed).state;
+                  if (dow == 5) return id(p5_thu).state;
+                  if (dow == 6) return id(p5_fri).state;
+                  if (dow == 7) return id(p5_sat).state;
+                  if (dow == 1) return id(p5_sun).state;
                   return false;
               then:
                 - script.execute: script_p5
@@ -404,16 +429,17 @@ time:
                   if (!((now.hour == h && now.minute == m) && (h != 0 || m != 0))) return false;
 
                   int dow = now.day_of_week;
-                  if (dow == 1) return id(p6_mon).state;
-                  if (dow == 2) return id(p6_tue).state;
-                  if (dow == 3) return id(p6_wed).state;
-                  if (dow == 4) return id(p6_thu).state;
-                  if (dow == 5) return id(p6_fri).state;
-                  if (dow == 6) return id(p6_sat).state;
-                  if (dow == 7) return id(p6_sun).state;
+                  if (dow == 2) return id(p6_mon).state;
+                  if (dow == 3) return id(p6_tue).state;
+                  if (dow == 4) return id(p6_wed).state;
+                  if (dow == 5) return id(p6_thu).state;
+                  if (dow == 6) return id(p6_fri).state;
+                  if (dow == 7) return id(p6_sat).state;
+                  if (dow == 1) return id(p6_sun).state;
                   return false;
               then:
                 - script.execute: script_p6
+
 
   - platform: sntp
     id: sntp_time
@@ -1468,6 +1494,51 @@ number:
     optimistic: true
     restore_value: yes
     initial_value: 0.0
+
+  # USTAWIENIA CZASOWE DLA CO2 (TRYB MANUALNY)
+  - platform: template
+    name: "CO2: Start Godzina (Manual)"
+    id: co2_start_h
+    mode: BOX
+    min_value: 0
+    max_value: 23
+    step: 1
+    optimistic: true
+    restore_value: yes
+    initial_value: 9
+
+  - platform: template
+    name: "CO2: Start Minuta (Manual)"
+    id: co2_start_m
+    mode: BOX
+    min_value: 0
+    max_value: 59
+    step: 1
+    optimistic: true
+    restore_value: yes
+    initial_value: 0
+
+  - platform: template
+    name: "CO2: Stop Godzina (Manual)"
+    id: co2_stop_h
+    mode: BOX
+    min_value: 0
+    max_value: 23
+    step: 1
+    optimistic: true
+    restore_value: yes
+    initial_value: 20
+
+  - platform: template
+    name: "CO2: Stop Minuta (Manual)"
+    id: co2_stop_m
+    mode: BOX
+    min_value: 0
+    max_value: 59
+    step: 1
+    optimistic: true
+    restore_value: yes
+    initial_value: 0
 
 
 switch:
