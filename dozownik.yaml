@@ -530,6 +530,84 @@ sensor:
           window_size: 7
           send_every: 1
 
+  - platform: template
+    name: "P1: Poziom (ml)"
+    id: p1_level_ml
+    unit_of_measurement: "ml"
+    accuracy_decimals: 0
+    state_class: "measurement"
+    icon: "mdi:water-percent"
+    lambda: |-
+      return id(p1_level).state;
+    filters:
+      - round: 0 # To zaokrągla 455.7 na 456 ml
+    update_interval: 10s
+
+  - platform: template
+    name: "P2: Poziom (ml)"
+    id: p2_level_ml
+    unit_of_measurement: "ml"
+    accuracy_decimals: 0
+    state_class: "measurement"
+    icon: "mdi:water-percent"
+    lambda: |-
+      return id(p2_level).state;
+    filters:
+      - round: 0 # To zaokrągla 455.7 na 456 ml
+    update_interval: 10s
+
+  - platform: template
+    name: "P3: Poziom (ml)"
+    id: p3_level_ml
+    unit_of_measurement: "ml"
+    accuracy_decimals: 0
+    state_class: "measurement"
+    icon: "mdi:water-percent"
+    lambda: |-
+      return id(p3_level).state;
+    filters:
+      - round: 0 # To zaokrągla 455.7 na 456 ml
+    update_interval: 10s
+
+  - platform: template
+    name: "P4: Poziom (ml)"
+    id: p4_level_ml
+    unit_of_measurement: "ml"
+    accuracy_decimals: 0
+    state_class: "measurement"
+    icon: "mdi:water-percent"
+    lambda: |-
+      return id(p4_level).state;
+    filters:
+      - round: 0 # To zaokrągla 455.7 na 456 ml
+    update_interval: 10s
+
+  - platform: template
+    name: "P5: Poziom (ml)"
+    id: p5_level_ml
+    unit_of_measurement: "ml"
+    accuracy_decimals: 0
+    state_class: "measurement"
+    icon: "mdi:water-percent"
+    lambda: |-
+      return id(p5_level).state;
+    filters:
+      - round: 0 # To zaokrągla 455.7 na 456 ml
+    update_interval: 10s
+
+
+  - platform: template
+    name: "P6: Poziom (ml)"
+    id: p6_level_ml
+    unit_of_measurement: "ml"
+    accuracy_decimals: 0
+    state_class: "measurement"
+    icon: "mdi:water-percent"
+    lambda: |-
+      return id(p6_level).state;
+    filters:
+      - round: 0 # To zaokrągla 455.7 na 456 ml
+    update_interval: 10s
 
 
 
