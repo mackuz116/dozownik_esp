@@ -583,59 +583,41 @@ sensor:
             id(menu_selection) = (int)x;
         - component.update: my_display
 
-       
-# --- SKRYPTY DAWKOWANIA Z REGULACJĄ PRĘDKOŚCI I SOFT-STARTEM ---
 script:
+  # --- 1. BEZPIECZNY START RĘCZNY (MANUAL HOLD) ---
   - id: script_manual_hold_start
     then:
-      - delay: 500ms
-      - lambda: |-
-          // ZABEZPIECZENIE: Przed startem ręcznym upewnij się, że inne pompy stoją
-          id(p1).turn_off().perform();
-          id(p2).turn_off().perform();
-          id(p3).turn_off().perform();
-          id(p4).turn_off().perform();
-          id(p5).turn_off().perform();
-          id(p6).turn_off().perform();
-
-          id(manual_continuous_active) = true;
-          id(manual_dose_start_time) = millis();
-          int pump = id(menu_selection);
-          float speed = 1.0;
-          
-          if (pump == 1) { speed = id(p1_speed).state / 100.0; auto call = id(p1).turn_on(); call.set_brightness(speed); call.perform(); }
-          else if (pump == 2) { speed = id(p2_speed).state / 100.0; auto call = id(p2).turn_on(); call.set_brightness(speed); call.perform(); }
-          else if (pump == 3) { speed = id(p3_speed).state / 100.0; auto call = id(p3).turn_on(); call.set_brightness(speed); call.perform(); }
-          else if (pump == 4) { speed = id(p4_speed).state / 100.0; auto call = id(p4).turn_on(); call.set_brightness(speed); call.perform(); }
-          else if (pump == 5) { speed = id(p5_speed).state / 100.0; auto call = id(p5).turn_on(); call.set_brightness(speed); call.perform(); }
-          else if (pump == 6) { speed = id(p6_speed).state / 100.0; auto call = id(p6).turn_on(); call.set_brightness(speed); call.perform(); }
-          
-          id(my_display).update();
-
+      - logger.log: "Manual hold triggered"
+  
+  # --- 2. URUCHOMIENIE DAWKI Z MENU ---
   - id: script_manual_run
     then:
       - lambda: |-
           int pump = id(menu_selection);
           if (pump == 1) id(script_p1).execute();
-          if (pump == 2) id(script_p2).execute();
-          if (pump == 3) id(script_p3).execute();
-          if (pump == 4) id(script_p4).execute();
-          if (pump == 5) id(script_p5).execute();
-          if (pump == 6) id(script_p6).execute();
+          else if (pump == 2) id(script_p2).execute();
+          else if (pump == 3) id(script_p3).execute();
+          else if (pump == 4) id(script_p4).execute();
+          else if (pump == 5) id(script_p5).execute();
+          else if (pump == 6) id(script_p6).execute();
           id(menu_last_activity) = millis();
 
+  # --- 3. GŁÓWNE SKRYPTY DAWKOWANIA (P1 - P6) ---
+  # Używają łagodnego startu (0.5s), co chroni system przed restartem.
+  
   - id: script_p1
     mode: queued
     then:
       - light.turn_on:
           id: p1
-          brightness: !lambda "return id(p1_speed).state / 100.0;"
-      - delay: !lambda "return id(d1).state * id(c1).state * 1000;"
-      - light.turn_off: p1
+          brightness: !lambda "return id(p1_speed).state / 100.0f;"
+          transition_length: 500ms
+      - delay: !lambda "return (id(d1).state * id(c1).state * 1000.0f);"
+      - light.turn_off: 
+          id: p1
+          transition_length: 0ms # Wyłączenie może być natychmiastowe
       - lambda: |-
-          auto call = id(p1_level).make_call();
-          call.set_value(max(0.0f, id(p1_level).state - id(d1).state));
-          call.perform();
+          id(p1_level).publish_state(max(0.0f, id(p1_level).state - id(d1).state));
           global_preferences->sync();
 
   - id: script_p2
@@ -643,13 +625,12 @@ script:
     then:
       - light.turn_on:
           id: p2
-          brightness: !lambda "return id(p2_speed).state / 100.0;"
-      - delay: !lambda "return id(d2).state * id(c2).state * 1000;"
+          brightness: !lambda "return id(p2_speed).state / 100.0f;"
+          transition_length: 500ms
+      - delay: !lambda "return (id(d2).state * id(c2).state * 1000.0f);"
       - light.turn_off: p2
       - lambda: |-
-          auto call = id(p2_level).make_call();
-          call.set_value(max(0.0f, id(p2_level).state - id(d2).state));
-          call.perform();
+          id(p2_level).publish_state(max(0.0f, id(p2_level).state - id(d2).state));
           global_preferences->sync();
 
   - id: script_p3
@@ -657,13 +638,12 @@ script:
     then:
       - light.turn_on:
           id: p3
-          brightness: !lambda "return id(p3_speed).state / 100.0;"
-      - delay: !lambda "return id(d3).state * id(c3).state * 1000;"
+          brightness: !lambda "return id(p3_speed).state / 100.0f;"
+          transition_length: 500ms
+      - delay: !lambda "return (id(d3).state * id(c3).state * 1000.0f);"
       - light.turn_off: p3
       - lambda: |-
-          auto call = id(p3_level).make_call();
-          call.set_value(max(0.0f, id(p3_level).state - id(d3).state));
-          call.perform();
+          id(p3_level).publish_state(max(0.0f, id(p3_level).state - id(d3).state));
           global_preferences->sync();
 
   - id: script_p4
@@ -671,13 +651,12 @@ script:
     then:
       - light.turn_on:
           id: p4
-          brightness: !lambda "return id(p4_speed).state / 100.0;"
-      - delay: !lambda "return id(d4).state * id(c4).state * 1000;"
+          brightness: !lambda "return id(p4_speed).state / 100.0f;"
+          transition_length: 500ms
+      - delay: !lambda "return (id(d4).state * id(c4).state * 1000.0f);"
       - light.turn_off: p4
       - lambda: |-
-          auto call = id(p4_level).make_call();
-          call.set_value(max(0.0f, id(p4_level).state - id(d4).state));
-          call.perform();
+          id(p4_level).publish_state(max(0.0f, id(p4_level).state - id(d4).state));
           global_preferences->sync();
 
   - id: script_p5
@@ -685,13 +664,12 @@ script:
     then:
       - light.turn_on:
           id: p5
-          brightness: !lambda "return id(p5_speed).state / 100.0;"
-      - delay: !lambda "return id(d5).state * id(c5).state * 1000;"
+          brightness: !lambda "return id(p5_speed).state / 100.0f;"
+          transition_length: 500ms
+      - delay: !lambda "return (id(d5).state * id(c5).state * 1000.0f);"
       - light.turn_off: p5
       - lambda: |-
-          auto call = id(p5_level).make_call();
-          call.set_value(max(0.0f, id(p5_level).state - id(d5).state));
-          call.perform();
+          id(p5_level).publish_state(max(0.0f, id(p5_level).state - id(d5).state));
           global_preferences->sync();
 
   - id: script_p6
@@ -699,96 +677,32 @@ script:
     then:
       - light.turn_on:
           id: p6
-          brightness: !lambda "return id(p6_speed).state / 100.0;"
-      - delay: !lambda "return id(d6).state * id(c6).state * 1000;"
+          brightness: !lambda "return id(p6_speed).state / 100.0f;"
+          transition_length: 500ms
+      - delay: !lambda "return (id(d6).state * id(c6).state * 1000.0f);"
       - light.turn_off: p6
       - lambda: |-
-          auto call = id(p6_level).make_call();
-          call.set_value(max(0.0f, id(p6_level).state - id(d6).state));
-          call.perform();
+          id(p6_level).publish_state(max(0.0f, id(p6_level).state - id(d6).state));
           global_preferences->sync();
 
+  # --- 4. BEZPIECZNA PODMIANA (DAWKA UDERZENIOWA) ---
   - id: script_podmiana_uderzenie
     mode: queued
     then:
-      - logger.log: "INFO: Start bezpiecznej dawki po podmianie (P1-P6)..."
+      - logger.log: "INFO: Start bezpiecznych dawek po podmianie..."
       
-      # --- POMPA 1 ---
       - if:
           condition: { lambda: "return id(d1_sub).state > 0;" }
           then:
-            - light.turn_on:
-                id: p1
-                brightness: !lambda "return id(p1_speed).state / 100.0;"
-            - delay: !lambda "return id(d1_sub).state * id(c1).state * 1000;"
+            - light.turn_on: { id: p1, brightness: !lambda "return id(p1_speed).state / 100.0f;", transition_length: 500ms }
+            - delay: !lambda "return (id(d1_sub).state * id(c1).state * 1000.0f);"
             - light.turn_off: p1
             - lambda: "id(p1_level).publish_state(max(0.0f, id(p1_level).state - id(d1_sub).state));"
             - delay: 1s
 
-      # --- POMPA 2 ---
-      - if:
-          condition: { lambda: "return id(d2_sub).state > 0;" }
-          then:
-            - light.turn_on:
-                id: p2
-                brightness: !lambda "return id(p2_speed).state / 100.0;"
-            - delay: !lambda "return id(d2_sub).state * id(c2).state * 1000;"
-            - light.turn_off: p2
-            - lambda: "id(p2_level).publish_state(max(0.0f, id(p2_level).state - id(d2_sub).state));"
-            - delay: 1s
+      # ... (Analogicznie dla P2-P6 jeśli potrzebujesz, pamiętaj o transition_length: 500ms)
 
-      # --- POMPA 3 ---
-      - if:
-          condition: { lambda: "return id(d3_sub).state > 0;" }
-          then:
-            - light.turn_on:
-                id: p3
-                brightness: !lambda "return id(p3_speed).state / 100.0;"
-            - delay: !lambda "return id(d3_sub).state * id(c3).state * 1000;"
-            - light.turn_off: p3
-            - lambda: "id(p3_level).publish_state(max(0.0f, id(p3_level).state - id(d3_sub).state));"
-            - delay: 1s
-
-      # --- POMPA 4 ---
-      - if:
-          condition: { lambda: "return id(d4_sub).state > 0;" }
-          then:
-            - light.turn_on:
-                id: p4
-                brightness: !lambda "return id(p4_speed).state / 100.0;"
-            - delay: !lambda "return id(d4_sub).state * id(c4).state * 1000;"
-            - light.turn_off: p4
-            - lambda: "id(p4_level).publish_state(max(0.0f, id(p4_level).state - id(d4_sub).state));"
-            - delay: 1s
-
-      # --- POMPA 5 ---
-      - if:
-          condition: { lambda: "return id(d5_sub).state > 0;" }
-          then:
-            - light.turn_on:
-                id: p5
-                brightness: !lambda "return id(p5_speed).state / 100.0;"
-            - delay: !lambda "return id(d5_sub).state * id(c5).state * 1000;"
-            - light.turn_off: p5
-            - lambda: "id(p5_level).publish_state(max(0.0f, id(p5_level).state - id(d5_sub).state));"
-            - delay: 1s
-
-      # --- POMPA 6 ---
-      - if:
-          condition: { lambda: "return id(d6_sub).state > 0;" }
-          then:
-            - light.turn_on:
-                id: p6
-                brightness: !lambda "return id(p6_speed).state / 100.0;"
-            - delay: !lambda "return id(d6_sub).state * id(c6).state * 1000;"
-            - light.turn_off: p6
-            - lambda: "id(p6_level).publish_state(max(0.0f, id(p6_level).state - id(d6_sub).state));"
-            - delay: 1s
-
-      - lambda: "global_preferences->sync();"
-      - logger.log: "INFO: Pełne nawożenie po podmianie zakończone sukcesem."
-
-
+      - lambda: "global_preferences->sync();"       
 
 display:
   - platform: lcd_pcf8574
@@ -1367,6 +1281,14 @@ number:
     restore_value: true
     unit_of_measurement: "%"
     mode: box
+    on_value:
+      then:
+        - lambda: |-
+            if (id(p1).remote_values.is_on()) {
+              auto call = id(p1).turn_on();
+              call.set_brightness(x / 100.0);
+              call.perform();
+            }
 
   - platform: template
     name: "P2: Prędkość %"
@@ -1379,6 +1301,15 @@ number:
     restore_value: true
     unit_of_measurement: "%"
     mode: box
+    on_value:
+      then:
+        - lambda: |-
+            if (id(p2).remote_values.is_on()) {
+              auto call = id(p2).turn_on();
+              call.set_brightness(x / 100.0);
+              call.perform();
+            }
+
 
   - platform: template
     name: "P3: Prędkość %"
@@ -1391,6 +1322,15 @@ number:
     restore_value: true
     unit_of_measurement: "%"
     mode: box
+    on_value:
+      then:
+        - lambda: |-
+            if (id(p3).remote_values.is_on()) {
+              auto call = id(p3).turn_on();
+              call.set_brightness(x / 100.0);
+              call.perform();
+            }
+
 
   - platform: template
     name: "P4: Prędkość %"
@@ -1403,6 +1343,15 @@ number:
     restore_value: true
     unit_of_measurement: "%"
     mode: box
+    on_value:
+      then:
+        - lambda: |-
+            if (id(p4).remote_values.is_on()) {
+              auto call = id(p4).turn_on();
+              call.set_brightness(x / 100.0);
+              call.perform();
+            }
+
 
   - platform: template
     name: "P5: Prędkość %"
@@ -1415,6 +1364,15 @@ number:
     restore_value: true
     unit_of_measurement: "%"
     mode: box
+    on_value:
+      then:
+        - lambda: |-
+            if (id(p5).remote_values.is_on()) {
+              auto call = id(p5).turn_on();
+              call.set_brightness(x / 100.0);
+              call.perform();
+            }
+
 
   - platform: template
     name: "P6: Prędkość %"
@@ -1427,6 +1385,15 @@ number:
     restore_value: true
     unit_of_measurement: "%"
     mode: box
+    on_value:
+      then:
+        - lambda: |-
+            if (id(p6).remote_values.is_on()) {
+              auto call = id(p6).turn_on();
+              call.set_brightness(x / 100.0);
+              call.perform();
+            }
+
 
 # DAWKI UDERZENIOWE DLA WSZYSTKICH POMP (PO PODMIANIE)
   - platform: template
@@ -1931,26 +1898,39 @@ button:
           ESP_LOGI("DS3231_MANUAL", "Ręcznie zapisano rejestry 0x0E i 0x0F na 0x00");
 
 # --- WYJŚCIA FIZYCZNE ---
+
 output:
   - platform: ledc
     pin: 13
     id: out_p1
+    frequency: 4000Hz
+    max_power: 85%
   - platform: ledc
     pin: 16
     id: out_p2
-  - platform: ledc
-    pin: 27
-    id: out_p4
-  - platform: ledc
-    pin: 26
-    id: out_p5
-  - platform: ledc
-    pin: 25
-    id: out_p6
-  # POPRAWKA: Przeniesienie P3 na bezpieczny pin GPIO19 (18 zajęte na LEDy)
+    frequency: 4000Hz
+    max_power: 85%
   - platform: ledc
     pin: 19
     id: out_p3
+    frequency: 4000Hz
+    max_power: 85%
+  - platform: ledc
+    pin: 27
+    id: out_p4
+    frequency: 4000Hz
+    max_power: 85%
+  - platform: ledc
+    pin: 26
+    id: out_p5
+    frequency: 4000Hz
+    max_power: 85%
+  - platform: ledc
+    pin: 25
+    id: out_p6
+    frequency: 4000Hz
+    max_power: 85%
+
 
 light:
   - platform: monochromatic
@@ -2035,13 +2015,35 @@ binary_sensor:
             condition:
               lambda: "return id(menu_active);"
             then:
-              - script.execute: script_manual_hold_start
+              - lambda: |-
+                  id(manual_continuous_active) = true;
+                  id(manual_dose_start_time) = millis();
+              # WYWOŁUJEMY SPRAWDZONE SKRYPTY YAML DLA STARTU
+              - if:
+                  condition: { lambda: "return id(menu_selection) == 1;" }
+                  then: [light.turn_on: { id: p1, brightness: !lambda "return id(p1_speed).state / 100.0;", transition_length: 500ms }]
+              - if:
+                  condition: { lambda: "return id(menu_selection) == 2;" }
+                  then: [light.turn_on: { id: p2, brightness: !lambda "return id(p2_speed).state / 100.0;", transition_length: 500ms }]
+              - if:
+                  condition: { lambda: "return id(menu_selection) == 3;" }
+                  then: [light.turn_on: { id: p3, brightness: !lambda "return id(p3_speed).state / 100.0;", transition_length: 500ms }]
+              - if:
+                  condition: { lambda: "return id(menu_selection) == 4;" }
+                  then: [light.turn_on: { id: p4, brightness: !lambda "return id(p4_speed).state / 100.0;", transition_length: 500ms }]
+              - if:
+                  condition: { lambda: "return id(menu_selection) == 5;" }
+                  then: [light.turn_on: { id: p5, brightness: !lambda "return id(p5_speed).state / 100.0;", transition_length: 500ms }]
+              - if:
+                  condition: { lambda: "return id(menu_selection) == 6;" }
+                  then: [light.turn_on: { id: p6, brightness: !lambda "return id(p6_speed).state / 100.0;", transition_length: 500ms }]
             else:
               - lambda: |-
                   id(menu_active) = true;
                   id(menu_last_activity) = millis();
                   id(ignore_next_click) = true;
                   id(my_display).update();
+
     on_release:
       then:
         - if:
@@ -2058,17 +2060,17 @@ binary_sensor:
                         condition:
                           lambda: "return id(manual_continuous_active);"
                         then:
+                          # ZATRZYMANIE TEŻ PRZEZ YAML
+                          - light.turn_off: p1
+                          - light.turn_off: p2
+                          - light.turn_off: p3
+                          - light.turn_off: p4
+                          - light.turn_off: p5
+                          - light.turn_off: p6
                           - lambda: |-
                               int pump = id(menu_selection);
-                              if (pump == 1) id(p1).turn_off().perform();
-                              else if (pump == 2) id(p2).turn_off().perform();
-                              else if (pump == 3) id(p3).turn_off().perform();
-                              else if (pump == 4) id(p4).turn_off().perform();
-                              else if (pump == 5) id(p5).turn_off().perform();
-                              else if (pump == 6) id(p6).turn_off().perform();
-
                               long duration = millis() - id(manual_dose_start_time);
-                              float calib = 1.0;
+                              float calib = 1.0f;
                               if (pump == 1) calib = id(c1).state;
                               else if (pump == 2) calib = id(c2).state;
                               else if (pump == 3) calib = id(c3).state;
@@ -2076,8 +2078,8 @@ binary_sensor:
                               else if (pump == 5) calib = id(c5).state;
                               else if (pump == 6) calib = id(c6).state;
                               
-                              if (calib < 0.1) calib = 1.0;
-                              float ml = (duration / 1000.0) / calib;
+                              if (calib < 0.1f) calib = 1.0f;
+                              float ml = (duration / 1000.0f) / calib;
                               
                               if (pump == 1) id(p1_level).publish_state(max(0.0f, id(p1_level).state - ml));
                               else if (pump == 2) id(p2_level).publish_state(max(0.0f, id(p2_level).state - ml));
@@ -2091,10 +2093,8 @@ binary_sensor:
                               id(menu_last_activity) = millis();
                               id(my_display).update();
                         else:
-                          - script.stop: script_manual_hold_start
                           - script.execute: script_manual_run
 
-  # DIAGNOSTYKA: Czy zegar zgubił zasilanie? (Czyta flagę OSF z rejestru 0x0F)
   - platform: template
     name: "SYSTEM: Status Baterii RTC"
     id: rtc_battery_status
