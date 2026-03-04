@@ -192,18 +192,26 @@ interval:
             for (int i = 0; i < 8; i++) { (*leds)[i] = Color(50,0,0); }
           }
 
-          // --- WIZUALIZACJA pH (Linia 2, LEDy 8-14) ---
           // --- WIZUALIZACJA TDS (Linia 2, LEDy 8-10) ---
           float tds = id(tds_real).state;
           if (!isnan(tds)) {
             // 3 diody dla TDS (8, 9, 10)
-            // Zakresy: <120 (miękka/niebieski), 120-240 (średnia/zielony), >240 (twarda/czerwony)
+            // NOWE PROGI DLA MAĆKA:
+            // < 150 (niebieski - woda RO/jałowa)
+            // 150 - 350 (zielony - OPTIMUM dla Twoich soli)
+            // > 350 (czerwony - wysoka mineralizacja/czas na podmianę)
             int tds_level = 0;
             Color tds_color = Color::BLACK;
             
-            if (tds > 10) { tds_level = 1; tds_color = Color(0, 0, 255); } // Niebieski
-            if (tds > 120) { tds_level = 2; tds_color = Color(0, 255, 0); } // Zielony
-            if (tds > 240) { tds_level = 3; tds_color = Color(255, 0, 0); } // Czerwony
+            if (tds > 10) { 
+              tds_level = 1; tds_color = Color(0, 0, 255); // Niebieski (RO+)
+            } 
+            if (tds > 150) { 
+              tds_level = 2; tds_color = Color(0, 255, 0); // Zielony (Nawozy OK)
+            } 
+            if (tds > 350) { 
+              tds_level = 3; tds_color = Color(255, 0, 0); // Czerwony (Wysoki TDS)
+            }
 
             for (int i = 0; i < 3; i++) {
               if (i < tds_level) (*leds)[8 + i] = tds_color;
@@ -223,13 +231,14 @@ interval:
             for (int i = 11; i <= 13; i++) { (*leds)[i] = Color::BLACK; }
             
             Color ph_color;
-            if (ph < 6.5) ph_color = Color(255, 255, 0); // Żółty
-            else if (ph > 7.2) ph_color = Color(0, 0, 255); // Niebieski
-            else ph_color = Color(0, 255, 0); // Zielony
+            if (ph < 6.2) ph_color = Color(255, 255, 0);      // Żółty (Zakwaszone - CO2 dużo)
+            else if (ph > 6.8) ph_color = Color(0, 0, 255);   // Niebieski (Zasadowe - CO2 mało)
+            else ph_color = Color(0, 255, 0);                 // Zielony (Strefa celowa 6.2 - 6.8)
             (*leds)[led_index] = ph_color;
           } else {
             for (int i = 11; i <= 13; i++) { (*leds)[i] = Color(20, 0, 0); } // Błąd pH
           }
+
 
           // --- STATUS WIFI (Dioda 7 w linii 2 -> LED 14) ---
           if (wifi::global_wifi_component->is_connected()) {
@@ -497,37 +506,63 @@ sensor:
     name: "pH Raw Voltage"
     id: ph_raw_v
     update_interval: 5s
-    internal: true # Nie musisz widzieć tego w Home Assistant
+    internal: false # Nie musisz widzieć tego w Home Assistant
+    # Dodajemy uśrednianie, żeby wynik nie skakał
+    filters:
+      - median:
+          window_size: 7
+          send_every: 1
 
-  # 2. Główny sensor pH z kompensacją temperatury
+  # # 2. Główny sensor pH z kompensacją temperatury
+  # - platform: template
+  #   name: "pH Akwarium"
+  #   id: ph_akwarium
+  #   unit_of_measurement: "pH"
+  #   accuracy_decimals: 2
+  #   update_interval: 5s
+  #   lambda: |-
+  #     float v = id(ph_raw_v).state;
+  #     float t = id(temp_akwarium).state;
+      
+  #     if (isnan(v) || isnan(t)) return NAN;
+
+  #     // TWOJA KALIBRACJA (przeliczona na 25°C):
+  #     // Używamy punktów, które wypracowaliśmy: 3.654V -> 7.07pH oraz 4.395V -> 3.58pH
+  #     // Obliczamy "slope" (nachylenie) dla 25°C
+  #     float slope_25 = (7.07 - 3.58) / (3.654 - 4.395);
+  #     float intercept = 7.07 - (slope_25 * 3.654);
+
+  #     // Współczynnik korekcji temp (Równanie Nernsta w uproszczeniu)
+  #     float t_factor = (t + 273.15) / (25.0 + 273.15);
+      
+  #     // Wyliczamy pH skorygowane
+  #     float ph_val = (v * slope_25 * t_factor) + intercept;
+      
+  #     return ph_val;
+  #   filters:
+  #     - median:
+  #         window_size: 7
+  #         send_every: 1
+
+
+  # 2. Główny sensor pH (uproszczony i skalibrowany)
   - platform: template
     name: "pH Akwarium"
     id: ph_akwarium
     unit_of_measurement: "pH"
     accuracy_decimals: 2
     update_interval: 5s
+    # Wyliczamy pH na podstawie napięcia
     lambda: |-
-      float v = id(ph_raw_v).state;
-      float t = id(temp_akwarium).state;
-      
-      if (isnan(v) || isnan(t)) return NAN;
-
-      // TWOJA KALIBRACJA (przeliczona na 25°C):
-      // Używamy punktów, które wypracowaliśmy: 3.654V -> 7.07pH oraz 4.395V -> 3.58pH
-      // Obliczamy "slope" (nachylenie) dla 25°C
-      float slope_25 = (7.07 - 3.58) / (3.654 - 4.395);
-      float intercept = 7.07 - (slope_25 * 3.654);
-
-      // Współczynnik korekcji temp (Równanie Nernsta w uproszczeniu)
-      float t_factor = (t + 273.15) / (25.0 + 273.15);
-      
-      // Wyliczamy pH skorygowane
-      float ph_val = (v * slope_25 * t_factor) + intercept;
-      
-      return ph_val;
+      return id(ph_raw_v).state;
     filters:
-      - median:
-          window_size: 7
+      - calibrate_linear:
+          # PUNKT 1: Bezpieczny dół (zostawiamy bez zmian dla zachowania skali)
+          - 3.750 -> 5.90
+          # PUNKT 2: NOWY STAN (Lampa ON + Tytan + Ręczny 6.48 przy 4.20V)
+          - 4.200 -> 6.48   
+      - sliding_window_moving_average:
+          window_size: 15
           send_every: 1
 
   - platform: template
