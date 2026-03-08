@@ -28,9 +28,10 @@ TDS
   zółty = sygnał (2)
 
 PH
-  zielony = + (1)
-  pomarańczowy = - (3)
-  zółty = sygnał (2)
+  zielony = + (1) kabel czerwony
+  pomarańczowy = - (3) kebel niebieski
+  zółty = sygnał (2) kabel biały
+  masa  modułu ekran
 
 pompy
   gniazdo 8 pin

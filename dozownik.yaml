@@ -6,6 +6,10 @@ esphome:
   on_boot:
     priority: -100 # POPRAWKA: Uruchom PO inicjalizacji I2C (wcześniej było za wcześnie)
     then:
+      # KROK 3: Bezpieczeństwo - zawsze wyłącz CO2 przy starcie systemu
+      - switch.turn_off: co2_solenoid_valve
+      - logger.log: "WATCHDOG: System wystartował, CO2 wymuszone na OFF"
+      ##
       - delay: 1s # Daj chwilę na ustabilizowanie napięć
       - lambda: |-
           // Diagnostyka przed naprawą
@@ -58,11 +62,20 @@ globals:
   - id: ignore_next_click
     type: bool
     initial_value: 'false'
+  # Nowe zmienne do Safety Feature (pH)
+  - id: ph_last_value
+    type: float
+    initial_value: '6.5'
+  - id: ph_slope_manual
+    type: float
+    initial_value: '0.0'
+
 
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
   power_save_mode: NONE
+  reboot_timeout: 15min # Jeśli nie ma WiFi przez 15 min -> restart
 
 web_server:
   port: 80
@@ -72,16 +85,18 @@ api:
   encryption:
     key: !secret api_encryption_key
   password: !secret ota_password
-
+  reboot_timeout: 15min # Jeśli HA nie odpowiada przez 15 min -> restart
 
 ota:
   - platform: esphome
+
 
 i2c:
   sda: 21
   scl: 22
   scan: true
   frequency: 50kHz # Zmniejszamy prędkość dla stabilności RTC
+  timeout: 100ms # Kluczowe: nie czekaj w nieskończoność na odpowiedź ADS1115
 
 
 # ads1115:
@@ -102,6 +117,12 @@ one_wire:
 
 logger:
   level: DEBUG
+  baud_rate: 0 # wyłączenie logowania po USB, jeśli używasz tylko przez WiFi
+
+
+debug:
+  update_interval: 5s
+
 
 # logger:
 #   level: DEBUG             # Globalnie pozwalamy na wszystko (w tym DEBUG)
@@ -201,6 +222,7 @@ interval:
             // 150 - 350 (zielony - OPTIMUM dla Twoich soli)
             // > 350 (czerwony - wysoka mineralizacja/czas na podmianę)
             int tds_level = 0;
+
             Color tds_color = Color::BLACK;
             
             if (tds > 10) { 
@@ -262,48 +284,7 @@ interval:
 
           leds->schedule_show();
 
-          // --- LOGIKA CO2 (Scalona i poprawiona) ---
-          float current_ph = id(ph_akwarium).state;
-          float setpoint = id(ph_setpoint).state;
-          float hist = id(ph_hysteresis).state;
-          auto now = id(ds_time).now();
 
-          // 1. ZABEZPIECZENIE KRYTYCZNE (Działa zawsze)
-          if (!isnan(current_ph) && current_ph < 5.80) {
-            if (id(co2_solenoid_valve).state) {
-              id(co2_solenoid_valve).turn_off();
-              ESP_LOGW("CO2", "ALARM: pH krytycznie niskie (%.2f)! Odcięto gaz.", current_ph);
-            }
-          } 
-          // 2. TRYB AUTO (Sterowanie wg pH)
-          else if (id(co2_auto_mode).state) {
-            if (!isnan(current_ph)) {
-              if (current_ph > (setpoint + hist)) {
-                id(co2_solenoid_valve).turn_on();
-              } else if (current_ph < (setpoint - hist)) {
-                id(co2_solenoid_valve).turn_off();
-              }
-            }
-          } 
-          // 3. TRYB RĘCZNY (Sterowanie wg Godzin)
-          else {
-            int current_min = now.hour * 60 + now.minute;
-            int start_min = (int)id(co2_start_h).state * 60 + (int)id(co2_start_m).state;
-            int stop_min = (int)id(co2_stop_h).state * 60 + (int)id(co2_stop_m).state;
-
-            bool should_be_on = false;
-            if (start_min < stop_min) { // np. 08:30 - 16:15
-              should_be_on = (current_min >= start_min && current_min < stop_min);
-            } else { // np. 22:00 - 06:00 (przez północ)
-              should_be_on = (current_min >= start_min || current_min < stop_min);
-            }
-
-            if (should_be_on) {
-              id(co2_solenoid_valve).turn_on();
-            } else {
-              id(co2_solenoid_valve).turn_off();
-            }
-          }
 
   # --- DIAGNOSTYKA RTC (Co 10s) ---
   - interval: 10s
@@ -461,6 +442,15 @@ time:
 
 
 sensor:
+  - platform: template
+    name: "CO2 Wykres Stan"
+    id: co2_graph_state
+    unit_of_measurement: ""
+    accuracy_decimals: 0
+    update_interval: never # Nie chcemy spamu, wysyłamy tylko przy zmianie
+    lambda: |-
+      return id(co2_solenoid_valve).state ? 1.0 : 0.0;
+
  # --- SENSOR TDS (na ADS 0x48) ---
   - platform: ads1115 
     multiplexer: 'A0_GND'
@@ -474,31 +464,7 @@ sensor:
           window_size: 5
           send_every: 1
 
-# OK 
-  # - platform: ads1115
-  #   multiplexer: 'A0_GND'
-  #   ads1115_id: ads_ph
-  #   gain: 6.144
-  #   name: "pH Akwarium"
-  #   id: ph_akwarium
-  #   unit_of_measurement: "pH"
-  #   accuracy_decimals: 2
-  #   update_interval: 5s
-  #   filters:
-  #     - calibrate_linear:
-  #         method: exact
-  #         datapoints:
-  #           - from: 3.654
-  #             to: 7.07    # PUNKT NEUTRALNY: Twoje akwarium (napięcie -> miernik ręczny)
-  #           - from: 4.140
-  #             to: 6.39    # PUNKT POŚREDNI: Z Twojej poprzedniej stabilnej próby
-  #           - from: 4.395
-  #             to: 3.58    # PUNKT KWAŚNY: Twoje 4.01 (miernik pokazał 3.58)
-  #     - median:
-  #         window_size: 7
-  #         send_every: 1
-
-# 1. Pobieramy surowe napięcie z ADS (bez filtrów kalibracji tutaj)
+# 1. Pobieramy surowe napięcie z ADS (filtr medianowy wycina szpilki)
   - platform: ads1115
     multiplexer: 'A0_GND'
     ads1115_id: ads_ph
@@ -506,14 +472,13 @@ sensor:
     name: "pH Raw Voltage"
     id: ph_raw_v
     update_interval: 5s
-    internal: false # Nie musisz widzieć tego w Home Assistant
-    # Dodajemy uśrednianie, żeby wynik nie skakał
+    internal: false
     filters:
       - median:
           window_size: 7
           send_every: 1
 
-  # # 2. Główny sensor pH z kompensacją temperatury
+  # 2. Główny sensor pH z logiką Dzień/Noc i ochroną przekaźnika
   # - platform: template
   #   name: "pH Akwarium"
   #   id: ph_akwarium
@@ -521,49 +486,147 @@ sensor:
   #   accuracy_decimals: 2
   #   update_interval: 5s
   #   lambda: |-
+  #     static bool is_day_mode = false; 
   #     float v = id(ph_raw_v).state;
-  #     float t = id(temp_akwarium).state;
       
-  #     if (isnan(v) || isnan(t)) return NAN;
-
-  #     // TWOJA KALIBRACJA (przeliczona na 25°C):
-  #     // Używamy punktów, które wypracowaliśmy: 3.654V -> 7.07pH oraz 4.395V -> 3.58pH
-  #     // Obliczamy "slope" (nachylenie) dla 25°C
-  #     float slope_25 = (7.07 - 3.58) / (3.654 - 4.395);
-  #     float intercept = 7.07 - (slope_25 * 3.654);
-
-  #     // Współczynnik korekcji temp (Równanie Nernsta w uproszczeniu)
-  #     float t_factor = (t + 273.15) / (25.0 + 273.15);
+  #     // Progi wykrywania światła (Histereza EM)
+  #     if (v > 4.45) is_day_mode = true;
+  #     else if (v < 4.30) is_day_mode = false;
       
-  #     // Wyliczamy pH skorygowane
-  #     float ph_val = (v * slope_25 * t_factor) + intercept;
-      
-  #     return ph_val;
+  #     if (is_day_mode) {
+  #       // DZIEŃ: 4.68V -> 6.20 pH (skalibrowane pod Twoje lampy)
+  #       return (v - 4.680) * (6.20 - 4.01) / (4.680 - 4.100) + 6.20;
+  #     } else {
+  #       // NOC: 4.19V -> 6.45 pH (skalibrowane pod Twój odczyt w ciemności)
+  #       return (v - 4.190) * (6.45 - 4.01) / (4.190 - 3.700) + 6.45;
+  #     }
   #   filters:
-  #     - median:
-  #         window_size: 7
+  #     - sliding_window_moving_average:
+  #         window_size: 20  # Zmniejszone z 30 na 20, żeby szybciej "wychodzić" z błędnych stanów
   #         send_every: 1
+  #   on_value:
+  #     then:
+  #       - lambda: |-
+  #           // 1. Obliczamy trend
+  #           id(ph_slope_manual) = (x - id(ph_last_value)) * 12.0f;
+            
+  #           // 2. Parametry czasu i bezpieczeństwa
+  #           static uint32_t last_switch = 0;
+  #           bool safety_lock = false;
+            
+  #           // Ignorujemy skok przy przełączaniu trybów (std::abs < 0.8)
+  #           if (std::abs(x - id(ph_last_value)) < 0.8) {
+  #             if (id(ph_slope_manual) < -0.150) {
+  #               safety_lock = true;
+  #               ESP_LOGE("SAFETY", "ALARM: Gwałtowny spadek pH (%.3f/min)!", id(ph_slope_manual));
+  #             }
+  #           }
+            
+  #           // 3. Logika sterowania zaworem (zintegrowana)
+  #           auto now = id(ds_time).now();
+  #           int now_min = now.hour * 60 + now.minute;
+  #           int start_min = (int)id(co2_start_h).state * 60 + (int)id(co2_start_m).state;
+  #           int stop_min = (int)id(co2_stop_h).state * 60 + (int)id(co2_stop_m).state;
+  #           bool in_time = (start_min < stop_min) ? (now_min >= start_min && now_min < stop_min) : (now_min >= start_min || now_min < stop_min);
 
+  #           bool should_be_on = false;
+  #           if (!safety_lock && x > 5.80 && in_time) {
+  #             if (id(co2_auto_mode).state) {
+  #               // Tryb Komputer pH
+  #               if (x > (id(ph_setpoint).state + id(ph_hysteresis).state)) should_be_on = true;
+  #               else if (x < (id(ph_setpoint).state - id(ph_hysteresis).state)) should_be_on = false;
+  #               else should_be_on = id(co2_solenoid_valve).state;
+  #             } else {
+  #               // Tryb Tylko Zegar
+  #               should_be_on = true;
+  #             }
+  #           }
 
-  # 2. Główny sensor pH (uproszczony i skalibrowany)
+  #           // 4. Fizyczna ochrona przekaźnika (nie częściej niż co 10 sekund)
+  #           if (should_be_on != id(co2_solenoid_valve).state) {
+  #             if (millis() - last_switch > 10000) {
+  #               if (should_be_on) id(co2_solenoid_valve).turn_on();
+  #               else id(co2_solenoid_valve).turn_off();
+  #               last_switch = millis();
+  #             }
+  #           }
+
+  #           id(ph_last_value) = x;
+
+# 2. Główny sensor pH - SKALIBROWANY PO EKRANOWANIU
   - platform: template
     name: "pH Akwarium"
     id: ph_akwarium
     unit_of_measurement: "pH"
     accuracy_decimals: 2
     update_interval: 5s
-    # Wyliczamy pH na podstawie napięcia
-    lambda: |-
-      return id(ph_raw_v).state;
+    lambda: return id(ph_raw_v).state; 
     filters:
       - calibrate_linear:
-          # PUNKT 1: Bezpieczny dół (zostawiamy bez zmian dla zachowania skali)
-          - 3.750 -> 5.90
-          # PUNKT 2: NOWY STAN (Lampa ON + Tytan + Ręczny 6.48 przy 4.20V)
-          - 4.200 -> 6.48   
+          # 1. Punkt: Słoik 6.86 (napięcie które miałeś wcześniej) -> Realne pH
+          - 4.210 -> 6.86
+          # 2. Punkt: Słoik 4.01 (napięcie z logów przed chwilą) -> Realne pH
+          - 4.455 -> 4.01
+          # 3. Punkt: Akwarium (Twoje stabilne napięcie w uziemionej wodzie) -> Obliczone pH
+          # Skoro w akwarium masz 5.25V, a w słoiku 6.86 miałeś 4.21V, 
+          # to przy uziemieniu Twój "punkt zero" przesunął się o ok. 1V.
+          - 5.270 -> 6.75  # To jest wyliczone pH na podstawie Twojego miernika (5.77 + korekta błędu)
       - sliding_window_moving_average:
-          window_size: 15
+          window_size: 20
           send_every: 1
+
+    on_value:
+      then:
+      - lambda: |-
+            // 1. Obliczamy trend
+            id(ph_slope_manual) = (x - id(ph_last_value)) * 12.0f;
+            
+            // 2. Logika czasu i trendu (Safety)
+            auto now = id(ds_time).now();
+            int now_min = now.hour * 60 + now.minute;
+            int start_min = (int)id(co2_start_h).state * 60 + (int)id(co2_start_m).state;
+            int stop_min = (int)id(co2_stop_h).state * 60 + (int)id(co2_stop_m).state;
+            bool in_time = (start_min < stop_min) ? (now_min >= start_min && now_min < stop_min) : (now_min >= start_min || now_min < stop_min);
+
+            bool should_be_on = false;
+
+            // ZABEZPIECZENIE: Nagły spadek pH (np. awaria reduktora / pęknięcie wężyka)
+            // Jeśli trend jest niższy niż -0.15 pH/min, wymuszamy wyłączenie
+            bool safety_trip = (id(ph_slope_manual) < -0.15f);
+
+            if (x > 5.0 && in_time && !safety_trip) {
+              if (id(co2_auto_mode).state) {
+                // Tryb Automatyczny (Komputer pH)
+                if (x > (id(ph_setpoint).state + id(ph_hysteresis).state)) should_be_on = true;
+                else if (x < (id(ph_setpoint).state - id(ph_hysteresis).state)) should_be_on = false;
+                else should_be_on = id(co2_solenoid_valve).state;
+              } else {
+                // Tryb Ręczny (Tylko Zegar)
+                should_be_on = true;
+              }
+            } else if (safety_trip) {
+              ESP_LOGE("safety", "ALARM: pH spada zbyt szybko! Odcinam CO2.");
+              should_be_on = false;
+            }
+            
+            // 3. Fizyczna ochrona przekaźnika (min. 10s między przełączeniami)
+            static uint32_t last_switch = 0;
+            if (should_be_on != id(co2_solenoid_valve).state) {
+              if (millis() - last_switch > 10000) {
+                if (should_be_on) id(co2_solenoid_valve).turn_on();
+                else id(co2_solenoid_valve).turn_off();
+                last_switch = millis();
+              }
+            }
+            id(ph_last_value) = x;
+
+  - platform: template
+    name: "Szybkosc Zmiany pH"
+    unit_of_measurement: "pH/min"
+    accuracy_decimals: 3
+    lambda: return id(ph_slope_manual);
+    update_interval: 5s
+
 
   - platform: template
     name: "P1: Poziom (ml)"
@@ -573,10 +636,13 @@ sensor:
     state_class: "measurement"
     icon: "mdi:water-percent"
     lambda: |-
+      // Zabezpieczenie: jeśli wartość jest mniejsza lub równa 0 przy starcie, 
+      // nie wysyłaj jej do HA, dopóki system nie odczyta poprawnej liczby.
+      if (id(p1_level).state <= 0) return {};
       return id(p1_level).state;
     filters:
       - round: 0 # To zaokrągla 455.7 na 456 ml
-    update_interval: 10s
+    update_interval: 30s
 
   - platform: template
     name: "P2: Poziom (ml)"
@@ -586,10 +652,11 @@ sensor:
     state_class: "measurement"
     icon: "mdi:water-percent"
     lambda: |-
+      if (id(p2_level).state <= 0) return {};
       return id(p2_level).state;
     filters:
       - round: 0 # To zaokrągla 455.7 na 456 ml
-    update_interval: 10s
+    update_interval: 30s
 
   - platform: template
     name: "P3: Poziom (ml)"
@@ -599,10 +666,11 @@ sensor:
     state_class: "measurement"
     icon: "mdi:water-percent"
     lambda: |-
+      if (id(p3_level).state <= 0) return {};
       return id(p3_level).state;
     filters:
       - round: 0 # To zaokrągla 455.7 na 456 ml
-    update_interval: 10s
+    update_interval: 30s
 
   - platform: template
     name: "P4: Poziom (ml)"
@@ -612,10 +680,11 @@ sensor:
     state_class: "measurement"
     icon: "mdi:water-percent"
     lambda: |-
+      if (id(p4_level).state <= 0) return {};
       return id(p4_level).state;
     filters:
       - round: 0 # To zaokrągla 455.7 na 456 ml
-    update_interval: 10s
+    update_interval: 30s
 
   - platform: template
     name: "P5: Poziom (ml)"
@@ -625,10 +694,11 @@ sensor:
     state_class: "measurement"
     icon: "mdi:water-percent"
     lambda: |-
+      if (id(p5_level).state <= 0) return {};
       return id(p5_level).state;
     filters:
       - round: 0 # To zaokrągla 455.7 na 456 ml
-    update_interval: 10s
+    update_interval: 30s
 
 
   - platform: template
@@ -639,10 +709,11 @@ sensor:
     state_class: "measurement"
     icon: "mdi:water-percent"
     lambda: |-
+      if (id(p6_level).state <= 0) return {};
       return id(p6_level).state;
     filters:
       - round: 0 # To zaokrągla 455.7 na 456 ml
-    update_interval: 10s
+    update_interval: 30s
 
 
 
@@ -702,7 +773,7 @@ script:
     then:
       - logger.log: "Manual hold triggered"
   
-  # --- 2. URUCHOMIENIE DAWKI Z MENU ---
+    # --- 2. URUCHOMIENIE DAWKI Z MENU ---
   - id: script_manual_run
     then:
       - lambda: |-
@@ -714,6 +785,14 @@ script:
           else if (pump == 5) id(script_p5).execute();
           else if (pump == 6) id(script_p6).execute();
           id(menu_last_activity) = millis();
+
+
+  - id: co2_safety_timer
+    mode: restart
+    then:
+      - delay: 240min # 4 godziny limitu
+      - switch.turn_off: co2_solenoid_valve
+      - logger.log: "!!! WATCHDOG: Przekroczono 4h podawania CO2 !!!"
 
   # --- 3. GŁÓWNE SKRYPTY DAWKOWANIA (P1 - P6) ---
   # Używają łagodnego startu (0.5s), co chroni system przed restartem.
@@ -877,7 +956,9 @@ display:
       }
       
       // Linia 2: Rotacja butelek (z funkcją MX dla 100%)
-      if ((millis() % 10000) < 5000) {
+      int cycle = (millis() / 5000) % 3; // Zmiana co 5 sekund
+      
+      if (cycle == 0) {
         // Pompy 1, 2, 3
         float p1 = id(p1_level).state / 10.0;
         float p2 = id(p2_level).state / 10.0;
@@ -887,7 +968,7 @@ display:
           (p1 >= 100.0 ? "MX" : str_sprintf("%2.0f", p1).c_str()),
           (p2 >= 100.0 ? "MX" : str_sprintf("%2.0f", p2).c_str()),
           (p3 >= 100.0 ? "MX" : str_sprintf("%2.0f", p3).c_str()));
-      } else {
+      } else if (cycle == 1){
         // Pompy 4, 5, 6
         float p4 = id(p4_level).state / 10.0;
         float p5 = id(p5_level).state / 10.0;
@@ -897,6 +978,9 @@ display:
           (p4 >= 100.0 ? "MX" : str_sprintf("%2.0f", p4).c_str()),
           (p5 >= 100.0 ? "MX" : str_sprintf("%2.0f", p5).c_str()),
           (p6 >= 100.0 ? "MX" : str_sprintf("%2.0f", p6).c_str()));
+      } else {
+        // Etap 3: TREND PH (Wyraźny podgląd)
+        it.printf(0, 1, "TREND pH: %+6.3f/min ", id(ph_slope_manual));
       }
       
       // Linia 3: PH i Temperatura (rozdzielone, z dużą ilością miejsca)
@@ -1852,6 +1936,22 @@ switch:
     id: co2_solenoid_valve
     restore_mode: ALWAYS_OFF
     icon: "mdi:valve"
+    on_turn_on:
+      then:
+        - script.execute: co2_safety_timer
+        - delay: 500ms
+        # Wymuszamy aktualizację sensora dla Grafany (stan 1)
+        - component.update: co2_graph_state
+        - logger.log: "CO2 Zawór: ON - wysłano stan do bazy"
+    on_turn_off:
+      then:
+        - script.stop: co2_safety_timer
+        # Wymuszamy aktualizację sensora dla Grafany (stan 0)
+        - component.update: co2_graph_state
+        - logger.log: "CO2 Zawór: OFF - wysłano stan do bazy"
+
+  
+  
 
   - platform: template
     name: "CO2: Tryb Automatyczny"
@@ -1859,6 +1959,8 @@ switch:
     optimistic: true
     restore_mode: RESTORE_DEFAULT_ON
     icon: "mdi:robot"
+
+
 
 
 # --- PRZYCISKI (Zaktualizowane o osobne REFILL) ---
