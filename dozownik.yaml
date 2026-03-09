@@ -807,17 +807,102 @@ script:
   # --- 3. GŁÓWNE SKRYPTY DAWKOWANIA (P1 - P6) ---
   # Używają łagodnego startu (0.5s), co chroni system przed restartem.
   
+  # - id: script_p1
+  #   mode: queued
+  #   then:
+  #     - light.turn_on:
+  #         id: p1
+  #         brightness: !lambda "return id(p1_speed).state / 100.0f;"
+  #         transition_length: 500ms
+  #     - delay: !lambda "return (id(d1).state * id(c1).state * 1000.0f);"
+  #     - light.turn_off: 
+  #         id: p1
+  #         transition_length: 0ms # Wyłączenie może być natychmiastowe
+  #     - lambda: |-
+  #         id(p1_level).publish_state(max(0.0f, id(p1_level).state - id(d1).state));
+  #         global_preferences->sync();
+
+  # - id: script_p2
+  #   mode: queued
+  #   then:
+  #     - light.turn_on:
+  #         id: p2
+  #         brightness: !lambda "return id(p2_speed).state / 100.0f;"
+  #         transition_length: 500ms
+  #     - delay: !lambda "return (id(d2).state * id(c2).state * 1000.0f);"
+  #     - light.turn_off: p2
+  #     - lambda: |-
+  #         id(p2_level).publish_state(max(0.0f, id(p2_level).state - id(d2).state));
+  #         global_preferences->sync();
+
+  # - id: script_p3
+  #   mode: queued
+  #   then:
+  #     - light.turn_on:
+  #         id: p3
+  #         brightness: !lambda "return id(p3_speed).state / 100.0f;"
+  #         transition_length: 500ms
+  #     - delay: !lambda "return (id(d3).state * id(c3).state * 1000.0f);"
+  #     - light.turn_off: p3
+  #     - lambda: |-
+  #         id(p3_level).publish_state(max(0.0f, id(p3_level).state - id(d3).state));
+  #         global_preferences->sync();
+
+  # - id: script_p4
+  #   mode: queued
+  #   then:
+  #     - light.turn_on:
+  #         id: p4
+  #         brightness: !lambda "return id(p4_speed).state / 100.0f;"
+  #         transition_length: 500ms
+  #     - delay: !lambda "return (id(d4).state * id(c4).state * 1000.0f);"
+  #     - light.turn_off: p4
+  #     - lambda: |-
+  #         id(p4_level).publish_state(max(0.0f, id(p4_level).state - id(d4).state));
+  #         global_preferences->sync();
+
+  # - id: script_p5
+  #   mode: queued
+  #   then:
+  #     - light.turn_on:
+  #         id: p5
+  #         brightness: !lambda "return id(p5_speed).state / 100.0f;"
+  #         transition_length: 500ms
+  #     - delay: !lambda "return (id(d5).state * id(c5).state * 1000.0f);"
+  #     - light.turn_off: p5
+  #     - lambda: |-
+  #         id(p5_level).publish_state(max(0.0f, id(p5_level).state - id(d5).state));
+  #         global_preferences->sync();
+
+  # - id: script_p6
+  #   mode: queued
+  #   then:
+  #     - light.turn_on:
+  #         id: p6
+  #         brightness: !lambda "return id(p6_speed).state / 100.0f;"
+  #         transition_length: 500ms
+  #     - delay: !lambda "return (id(d6).state * id(c6).state * 1000.0f);"
+  #     - light.turn_off: p6
+  #     - lambda: |-
+  #         id(p6_level).publish_state(max(0.0f, id(p6_level).state - id(d6).state));
+  #         global_preferences->sync();
+
+
+
   - id: script_p1
     mode: queued
     then:
       - light.turn_on:
           id: p1
           brightness: !lambda "return id(p1_speed).state / 100.0f;"
-          transition_length: 500ms
-      - delay: !lambda "return (id(d1).state * id(c1).state * 1000.0f);"
+          transition_length: 0ms
+      - delay: !lambda |-
+          float ml_per_10s = id(c1).state;
+          if (ml_per_10s < 0.1f) return 0;
+          return (id(d1).state * (10.0f / ml_per_10s)) * 1000.0f;
       - light.turn_off: 
           id: p1
-          transition_length: 0ms # Wyłączenie może być natychmiastowe
+          transition_length: 0ms
       - lambda: |-
           id(p1_level).publish_state(max(0.0f, id(p1_level).state - id(d1).state));
           global_preferences->sync();
@@ -828,9 +913,14 @@ script:
       - light.turn_on:
           id: p2
           brightness: !lambda "return id(p2_speed).state / 100.0f;"
-          transition_length: 500ms
-      - delay: !lambda "return (id(d2).state * id(c2).state * 1000.0f);"
-      - light.turn_off: p2
+          transition_length: 0ms
+      - delay: !lambda |-
+          float ml_per_10s = id(c2).state;
+          if (ml_per_10s < 0.1f) return 0;
+          return (id(d2).state * (10.0f / ml_per_10s)) * 1000.0f;
+      - light.turn_off: 
+          id: p2
+          transition_length: 0ms
       - lambda: |-
           id(p2_level).publish_state(max(0.0f, id(p2_level).state - id(d2).state));
           global_preferences->sync();
@@ -841,9 +931,14 @@ script:
       - light.turn_on:
           id: p3
           brightness: !lambda "return id(p3_speed).state / 100.0f;"
-          transition_length: 500ms
-      - delay: !lambda "return (id(d3).state * id(c3).state * 1000.0f);"
-      - light.turn_off: p3
+          transition_length: 0ms
+      - delay: !lambda |-
+          float ml_per_10s = id(c3).state;
+          if (ml_per_10s < 0.1f) return 0;
+          return (id(d3).state * (10.0f / ml_per_10s)) * 1000.0f;
+      - light.turn_off: 
+          id: p3
+          transition_length: 0ms
       - lambda: |-
           id(p3_level).publish_state(max(0.0f, id(p3_level).state - id(d3).state));
           global_preferences->sync();
@@ -854,9 +949,14 @@ script:
       - light.turn_on:
           id: p4
           brightness: !lambda "return id(p4_speed).state / 100.0f;"
-          transition_length: 500ms
-      - delay: !lambda "return (id(d4).state * id(c4).state * 1000.0f);"
-      - light.turn_off: p4
+          transition_length: 0ms
+      - delay: !lambda |-
+          float ml_per_10s = id(c4).state;
+          if (ml_per_10s < 0.1f) return 0;
+          return (id(d4).state * (10.0f / ml_per_10s)) * 1000.0f;
+      - light.turn_off: 
+          id: p4
+          transition_length: 0ms
       - lambda: |-
           id(p4_level).publish_state(max(0.0f, id(p4_level).state - id(d4).state));
           global_preferences->sync();
@@ -867,9 +967,14 @@ script:
       - light.turn_on:
           id: p5
           brightness: !lambda "return id(p5_speed).state / 100.0f;"
-          transition_length: 500ms
-      - delay: !lambda "return (id(d5).state * id(c5).state * 1000.0f);"
-      - light.turn_off: p5
+          transition_length: 0ms
+      - delay: !lambda |-
+          float ml_per_10s = id(c5).state;
+          if (ml_per_10s < 0.1f) return 0;
+          return (id(d5).state * (10.0f / ml_per_10s)) * 1000.0f;
+      - light.turn_off: 
+          id: p5
+          transition_length: 0ms
       - lambda: |-
           id(p5_level).publish_state(max(0.0f, id(p5_level).state - id(d5).state));
           global_preferences->sync();
@@ -880,12 +985,34 @@ script:
       - light.turn_on:
           id: p6
           brightness: !lambda "return id(p6_speed).state / 100.0f;"
-          transition_length: 500ms
-      - delay: !lambda "return (id(d6).state * id(c6).state * 1000.0f);"
-      - light.turn_off: p6
+          transition_length: 0ms
+      - delay: !lambda |-
+          float ml_per_10s = id(c6).state;
+          if (ml_per_10s < 0.1f) return 0;
+          return (id(d6).state * (10.0f / ml_per_10s)) * 1000.0f;
+      - light.turn_off: 
+          id: p6
+          transition_length: 0ms
       - lambda: |-
           id(p6_level).publish_state(max(0.0f, id(p6_level).state - id(d6).state));
           global_preferences->sync();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
   # --- 4. BEZPIECZNA PODMIANA (DAWKA UDERZENIOWA) ---
   - id: script_podmiana_uderzenie
@@ -1158,7 +1285,7 @@ number:
     step: 1
     optimistic: true
     restore_value: yes
-    initial_value: 1000
+    #initial_value: 1000
 
   - platform: template
     name: "02. BUTELKA: P2 (ml)"
@@ -1171,6 +1298,7 @@ number:
     restore_value: yes
     initial_value: 1000
 
+   
   - platform: template
     name: "02. BUTELKA: P3 (ml)"
     id: p3_level
@@ -1181,7 +1309,7 @@ number:
     optimistic: true
     restore_value: yes
     initial_value: 1000
-    
+
 
   - platform: template
     name: "02. BUTELKA: P4 (ml)"
