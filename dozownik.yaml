@@ -70,6 +70,31 @@ globals:
     type: float
     initial_value: '0.0'
 
+  # ostatni start pomp
+  - id: p1_last_run_val
+    type: std::string
+    restore_value: yes
+    initial_value: '"Nigdy"'
+  - id: p2_last_run_val
+    type: std::string
+    restore_value: yes
+    initial_value: '"Nigdy"'
+  - id: p3_last_run_val
+    type: std::string
+    restore_value: yes
+    initial_value: '"Nigdy"'
+  - id: p4_last_run_val
+    type: std::string
+    restore_value: yes
+    initial_value: '"Nigdy"'
+  - id: p5_last_run_val
+    type: std::string
+    restore_value: yes
+    initial_value: '"Nigdy"'
+  - id: p6_last_run_val
+    type: std::string
+    restore_value: yes
+    initial_value: '"Nigdy"'
 
 wifi:
   ssid: !secret wifi_ssid
@@ -575,57 +600,114 @@ sensor:
           window_size: 20
           send_every: 1
 
+    # on_value:
+    #   then:
+    #   - lambda: |-
+    #         // 1. Obliczamy trend (Szybkość zmiany)
+    #         id(ph_slope_manual) = (x - id(ph_last_value)) * 12.0f;
+            
+    #         // 2. Logika czasu i trendu
+    #         auto now = id(ds_time).now();
+    #         int now_min = now.hour * 60 + now.minute;
+    #         int start_min = (int)id(co2_start_h).state * 60 + (int)id(co2_start_m).state;
+    #         int stop_min = (int)id(co2_stop_h).state * 60 + (int)id(co2_stop_m).state;
+            
+    #         // Sprawdzamy czy mieścimy się w godzinach (używane tylko w trybie Ręcznym)
+    #         bool in_time = (start_min < stop_min) ? (now_min >= start_min && now_min < stop_min) : (now_min >= start_min || now_min < stop_min);
+
+    #         bool should_be_on = false;
+    #         bool safety_trip = (id(ph_slope_manual) < -0.15f);
+
+    #         // --- KLUCZOWA ZMIANA DLA AUTOMATYKI ---
+    #         // Jeśli AUTO (state == true) -> pozwalamy na działanie ZAWSZE (true)
+    #         // Jeśli MANUAL (state == false) -> pozwalamy tylko w godzinach (in_time)
+    #         bool logic_allowed = id(co2_auto_mode).state ? true : in_time;
+
+    #         if (x > 5.0 && logic_allowed && !safety_trip) {
+    #           if (id(co2_auto_mode).state) {
+    #             // TRYB AUTOMATYCZNY: Pilnuje pH całą dobę z histerezą
+    #             if (x > (id(ph_setpoint).state + id(ph_hysteresis).state)) {
+    #               should_be_on = true;
+    #             } else if (x < (id(ph_setpoint).state - id(ph_hysteresis).state)) {
+    #               should_be_on = false;
+    #             } else {
+    #               // Podtrzymanie obecnego stanu wewnątrz widełek histerezy
+    #               should_be_on = id(co2_solenoid_valve).state;
+    #             }
+    #           } else {
+    #             // TRYB RĘCZNY: Działa tylko w godzinach in_time
+    #             should_be_on = true; 
+    #           }
+    #         } else if (safety_trip) {
+    #           ESP_LOGE("safety", "ALARM: pH spada zbyt szybko! Odcinam CO2.");
+    #           should_be_on = false;
+    #         }
+
+    #         // 3. Fizyczna ochrona przekaźnika (min. 10s zwłoki)
+    #         static uint32_t last_switch = 0;
+    #         if (should_be_on != id(co2_solenoid_valve).state) {
+    #           if (millis() - last_switch > 10000) {
+    #             if (should_be_on) id(co2_solenoid_valve).turn_on();
+    #             else id(co2_solenoid_valve).turn_off();
+    #             last_switch = millis();
+    #           }
+    #         }
+    #         id(ph_last_value) = x;
+
+
     on_value:
       then:
       - lambda: |-
-            // 1. Obliczamy trend (Szybkość zmiany)
+            // 1. Obliczamy trend (Szybkość zmiany - Twój Safety Feature)
             id(ph_slope_manual) = (x - id(ph_last_value)) * 12.0f;
             
-            // 2. Logika czasu i trendu
+            // 2. Pobieramy aktualny czas z RTC
             auto now = id(ds_time).now();
             int now_min = now.hour * 60 + now.minute;
             int start_min = (int)id(co2_start_h).state * 60 + (int)id(co2_start_m).state;
             int stop_min = (int)id(co2_stop_h).state * 60 + (int)id(co2_stop_m).state;
-            
-            // Sprawdzamy czy mieścimy się w godzinach (używane tylko w trybie Ręcznym)
+
+            // Sprawdzamy okno czasowe (Day/Night)
             bool in_time = (start_min < stop_min) ? (now_min >= start_min && now_min < stop_min) : (now_min >= start_min || now_min < stop_min);
-
+            
             bool should_be_on = false;
-            bool safety_trip = (id(ph_slope_manual) < -0.15f);
+            bool safety_trip = (id(ph_slope_manual) < -0.15f); // Blokada przy spadku > 0.15 pH / min
 
-            // --- KLUCZOWA ZMIANA DLA AUTOMATYKI ---
-            // Jeśli AUTO (state == true) -> pozwalamy na działanie ZAWSZE (true)
-            // Jeśli MANUAL (state == false) -> pozwalamy tylko w godzinach (in_time)
-            bool logic_allowed = id(co2_auto_mode).state ? true : in_time;
-
-            if (x > 5.0 && logic_allowed && !safety_trip) {
-              if (id(co2_auto_mode).state) {
-                // TRYB AUTOMATYCZNY: Pilnuje pH całą dobę z histerezą
-                if (x > (id(ph_setpoint).state + id(ph_hysteresis).state)) {
-                  should_be_on = true;
-                } else if (x < (id(ph_setpoint).state - id(ph_hysteresis).state)) {
-                  should_be_on = false;
+            // --- ZINTEGROWANA LOGIKA STEROWANIA ---
+            // CO2 podajemy tylko gdy: pH > 5.0 (ochrona przed błędem sondy), brak awarii (safety_trip)
+            // ORAZ gdy jesteśmy w oknie czasowym (nawet w trybie AUTO - dla bezpieczeństwa ryb)
+            
+            if (x > 5.0 && in_time && !safety_trip) {
+                if (id(co2_auto_mode).state) {
+                    // TRYB AUTOMATYCZNY (Komputer pH):
+                    if (x > (id(ph_setpoint).state + id(ph_hysteresis).state)) {
+                        should_be_on = true;
+                    } else if (x < (id(ph_setpoint).state - id(ph_hysteresis).state)) {
+                        should_be_on = false;
+                    } else {
+                        // Podtrzymanie stanu (histereza)
+                        should_be_on = id(co2_solenoid_valve).state;
+                    }
                 } else {
-                  // Podtrzymanie obecnego stanu wewnątrz widełek histerezy
-                  should_be_on = id(co2_solenoid_valve).state;
+                    // TRYB MANUALNY (Tylko zegar):
+                    should_be_on = true;
                 }
-              } else {
-                // TRYB RĘCZNY: Działa tylko w godzinach in_time
-                should_be_on = true; 
-              }
             } else if (safety_trip) {
-              ESP_LOGE("safety", "ALARM: pH spada zbyt szybko! Odcinam CO2.");
-              should_be_on = false;
+                ESP_LOGE("safety", "ALARM: pH spada zbyt szybko! Odcinam CO2.");
+                should_be_on = false;
+            } else {
+                // NOC lub pH < 5.0:
+                should_be_on = false;
             }
 
-            // 3. Fizyczna ochrona przekaźnika (min. 10s zwłoki)
+            // 3. Fizyczna ochrona przekaźnika (min. 10s zwłoki między przełączeniami)
             static uint32_t last_switch = 0;
             if (should_be_on != id(co2_solenoid_valve).state) {
-              if (millis() - last_switch > 10000) {
-                if (should_be_on) id(co2_solenoid_valve).turn_on();
-                else id(co2_solenoid_valve).turn_off();
-                last_switch = millis();
-              }
+                if (millis() - last_switch > 10000) {
+                    if (should_be_on) id(co2_solenoid_valve).turn_on();
+                    else id(co2_solenoid_valve).turn_off();
+                    last_switch = millis();
+                }
             }
             id(ph_last_value) = x;
 
@@ -893,8 +975,10 @@ script:
     mode: queued
     then:
       - lambda: |-
-          // To zapisze datę i godzinę startu w sensorze
-          id(p1_last_run).publish_state(id(ds_time).now().strftime("%d.%m %H:%M:%S"));
+          // Zapisz czas do zmiennej globalnej (pamięć Flash)
+          id(p1_last_run_val) = id(sntp_time).now().strftime("%Y-%m-%d, %H:%M");
+          // Wyślij stan do sensora (widoczne od razu w HA)
+          id(p1_last_run).publish_state(id(p1_last_run_val));
       - light.turn_on:
           id: p1
           brightness: !lambda "return id(p1_speed).state / 100.0f;"
@@ -922,8 +1006,10 @@ script:
     mode: queued
     then:
       - lambda: |-
-          // To zapisze datę i godzinę startu w sensorze
-          id(p2_last_run).publish_state(id(ds_time).now().strftime("%d.%m %H:%M:%S"));
+          // Zapisz czas do zmiennej globalnej (pamięć Flash)
+          id(p2_last_run_val) = id(sntp_time).now().strftime("%Y-%m-%d, %H:%M");
+          // Wyślij stan do sensora (widoczne od razu w HA)
+          id(p2_last_run).publish_state(id(p2_last_run_val));
       - light.turn_on:
           id: p2
           brightness: !lambda "return id(p2_speed).state / 100.0f;"
@@ -951,8 +1037,10 @@ script:
     mode: queued
     then:
       - lambda: |-
-          // To zapisze datę i godzinę startu w sensorze
-          id(p3_last_run).publish_state(id(ds_time).now().strftime("%d.%m %H:%M:%S"));
+          // Zapisz czas do zmiennej globalnej (pamięć Flash)
+          id(p3_last_run_val) = id(sntp_time).now().strftime("%Y-%m-%d, %H:%M");
+          // Wyślij stan do sensora (widoczne od razu w HA)
+          id(p3_last_run).publish_state(id(p3_last_run_val));
       - light.turn_on:
           id: p3
           brightness: !lambda "return id(p3_speed).state / 100.0f;"
@@ -980,8 +1068,10 @@ script:
     mode: queued
     then:
       - lambda: |-
-          // To zapisze datę i godzinę startu w sensorze
-          id(p4_last_run).publish_state(id(ds_time).now().strftime("%d.%m %H:%M:%S"));
+          // Zapisz czas do zmiennej globalnej (pamięć Flash)
+          id(p4_last_run_val) = id(sntp_time).now().strftime("%Y-%m-%d, %H:%M");
+          // Wyślij stan do sensora (widoczne od razu w HA)
+          id(p4_last_run).publish_state(id(p4_last_run_val));
       - light.turn_on:
           id: p4
           brightness: !lambda "return id(p4_speed).state / 100.0f;"
@@ -1009,8 +1099,10 @@ script:
     mode: queued
     then:
       - lambda: |-
-          // To zapisze datę i godzinę startu w sensorze
-          id(p5_last_run).publish_state(id(ds_time).now().strftime("%d.%m %H:%M:%S"));
+          // Zapisz czas do zmiennej globalnej (pamięć Flash)
+          id(p5_last_run_val) = id(sntp_time).now().strftime("%Y-%m-%d, %H:%M");
+          // Wyślij stan do sensora (widoczne od razu w HA)
+          id(p5_last_run).publish_state(id(p5_last_run_val));
       - light.turn_on:
           id: p5
           brightness: !lambda "return id(p5_speed).state / 100.0f;"
@@ -1038,8 +1130,10 @@ script:
     mode: queued
     then:
       - lambda: |-
-          // To zapisze datę i godzinę startu w sensorze
-          id(p6_last_run).publish_state(id(ds_time).now().strftime("%d.%m %H:%M:%S"));
+          // Zapisz czas do zmiennej globalnej (pamięć Flash)
+          id(p6_last_run_val) = id(sntp_time).now().strftime("%Y-%m-%d, %H:%M");
+          // Wyślij stan do sensora (widoczne od razu w HA)
+          id(p6_last_run).publish_state(id(p6_last_run_val));
       - light.turn_on:
           id: p6
           brightness: !lambda "return id(p6_speed).state / 100.0f;"
@@ -1137,7 +1231,7 @@ display:
         else if (sel == 3) it.print(0, 2, "K2SO4 (Potas)");
         else if (sel == 4) it.print(0, 2, "Carbo");
         else if (sel == 5) it.print(0, 2, "MgSO4 (Magnez)");
-        else if (sel == 6) it.print(0, 2, "Makro");
+        else if (sel == 6) it.print(0, 2, "KH2PO4 (Fosfor)");
         
         it.print(0, 3, "Kliknij aby dozowac");
         return;
@@ -1328,7 +1422,7 @@ text_sensor:
     update_interval: 5s
 
   - platform: template
-    name: "02. POZIOM: MAKRO [P6]"
+    name: "02. POZIOM: FOSFOR [P6]"
     id: bar_p6
     lambda: |-
       int dots = (id(p6_level).state / 1000.0) * 10.0;
@@ -1338,37 +1432,47 @@ text_sensor:
       return bar;
     update_interval: 5s
 
-
   - platform: template
     name: "P1: Ostatni start"
     id: p1_last_run
     icon: "mdi:clock-start"
+    update_interval: never
+    lambda: 'return id(p1_last_run_val);'
 
   - platform: template
     name: "P2: Ostatni start"
     id: p2_last_run
     icon: "mdi:clock-start"
+    update_interval: never
+    lambda: 'return id(p2_last_run_val);'
 
   - platform: template
     name: "P3: Ostatni start"
     id: p3_last_run
     icon: "mdi:clock-start"
-
+    update_interval: never
+    lambda: 'return id(p3_last_run_val);'
 
   - platform: template
     name: "P4: Ostatni start"
     id: p4_last_run
     icon: "mdi:clock-start"
+    update_interval: never
+    lambda: 'return id(p4_last_run_val);'
 
   - platform: template
     name: "P5: Ostatni start"
     id: p5_last_run
     icon: "mdi:clock-start"
+    update_interval: never
+    lambda: 'return id(p5_last_run_val);'
 
   - platform: template
     name: "P6: Ostatni start"
     id: p6_last_run
     icon: "mdi:clock-start"
+    update_interval: never
+    lambda: 'return id(p6_last_run_val);'    
 
 
 
@@ -1886,7 +1990,7 @@ number:
     initial_value: 0.0
 
   - platform: template
-    name: "06. PODMIANA: P6 MAKRO (ml)"
+    name: "06. PODMIANA: P6 FOSFOR (ml)"
     id: d6_sub
     mode: BOX
     min_value: 0
