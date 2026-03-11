@@ -489,6 +489,8 @@ sensor:
           window_size: 5
           send_every: 1
 
+
+
 # 1. Pobieramy surowe napięcie z ADS (filtr medianowy wycina szpilki)
   - platform: ads1115
     multiplexer: 'A0_GND'
@@ -816,6 +818,27 @@ sensor:
     unit_of_measurement: "°C"
     accuracy_decimals: 1
 
+  # - platform: template
+  #   name: "TDS Akwarium"
+  #   id: tds_real
+  #   unit_of_measurement: "ppm"
+  #   accuracy_decimals: 0
+  #   lambda: |-
+  #     float v = id(tds_voltage).state;
+  #     float temp = id(temp_akwarium).state;
+
+  #     if (v < 0.02 || isnan(temp)) return 0.0;
+
+  #     float v_corr = v / (1.0 + 0.02 * (temp - 25.0));
+
+  #     // FINALNA KALIBRACJA:
+  #     // Przy v=0.075V pokaże: (0.075 - 0.079) * 463 + 38 = -1.8 + 38 = ~36 ppm
+  #     float ppm = (v_corr - 0.079) * 463.0 + 38.0;
+
+  #     if (ppm < 0) return 0.0;
+  #     return ppm;
+  #   update_interval: 5s
+
   - platform: template
     name: "TDS Akwarium"
     id: tds_real
@@ -825,17 +848,23 @@ sensor:
       float v = id(tds_voltage).state;
       float temp = id(temp_akwarium).state;
 
-      if (v < 0.02 || isnan(temp)) return 0.0;
+      if (v < 0.01 || isnan(temp)) return 0.0;
 
-      float v_corr = v / (1.0 + 0.02 * (temp - 25.0));
+      // 1. Kompensacja temperatury do 25°C
+      float v_25 = v / (1.0 + 0.02 * (temp - 25.0));
 
-      // FINALNA KALIBRACJA:
-      // Przy v=0.075V pokaże: (0.075 - 0.079) * 463 + 38 = -1.8 + 38 = ~36 ppm
-      float ppm = (v_corr - 0.079) * 463.0 + 38.0;
+      // 2. NOWA KALIBRACJA LINIOWA (y = ax + b)
+      // Wyliczona z Twoich punktów: RO (0.0157V -> 7ppm) i Akwarium (0.3550V -> 145ppm)
+      // Współczynnik nachylenia (a) = (145 - 7) / (0.3550 - 0.0157) = ~406.7
+      // Przesunięcie (b) = 7 - (406.7 * 0.0157) = ~0.61
+      
+      float ppm = (v_25 * 406.7) + 0.61;
 
       if (ppm < 0) return 0.0;
       return ppm;
     update_interval: 5s
+
+
 
   - platform: rotary_encoder
     name: "Pokrętło Menu"
